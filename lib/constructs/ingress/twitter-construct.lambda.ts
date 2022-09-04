@@ -26,6 +26,10 @@ export interface TwitterActivityPayload {
   tweet_delete_events: any[],
 }
 
+interface Dictionary<T> {
+  [Key: string]: T;
+}
+
 class Twitter {
   private readonly _secretArn: string;
   private readonly _eventBusName: string;
@@ -142,25 +146,27 @@ class Twitter {
   generateEvents = (payload: TwitterActivityPayload): aws.EventBridge.PutEventsRequestEntryList => {
     const events: aws.EventBridge.PutEventsRequestEntryList = [];
 
-    const types = [
-      'tweet_create_events', 
-      'favorite_events', 
-      'follow_events', 
-      'unfollow_events', 
-      'block_events', 
-      'unblock_events',
-      'mute_events',
-      'unmute_events',
-      'user_event',
-      'direct_message_events',
-      'direct_message_indicate_typing_events',
-      'direct_message_mark_read_events',
-      'tweet_delete_events'];
+    const types: Dictionary<string> = {
+      'tweet_create_events' : 'TWEETED',
+      'favorite_events': 'FAVOURITED',
+      'follow_events': 'FOLLOWED',
+      'unfollow_events': 'UNFOLLOWED',
+      'block_events': 'BLOCKED',
+      'unblock_events': 'UNBLOCKED',
+      'mute_events': 'MUTED',
+      'unmute_events': 'UNMUTED',
+      'user_event': 'PERMISSION_REVOKED',
+      'direct_message_events': 'DM_RECEIVED',
+      'direct_message_indicate_typing_events': 'DM_TYPING',
+      'direct_message_mark_read_events': 'DM_MARKED_READ',
+      'tweet_delete_events': 'TWEET_DELETED',
+    }
 
-    for (const type of types) {
+    for (const type in types) {
       const eventsOfType = (payload as any)[type];
       if (eventsOfType) {
-        (payload as any)[type].forEach((e: any) => events.push(this.generateSingleEvent(type, e)))
+        const typeName: string = types[type];
+        (payload as any)[type].forEach((e: any) => events.push(this.generateSingleEvent(typeName, e)))
       }
     }
 
@@ -170,7 +176,7 @@ class Twitter {
   generateSingleEvent = (type: string, detail: any): aws.EventBridge.PutEventsRequestEntry => {
     return {
       Detail: JSON.stringify(detail),
-      DetailType: `TWITTER.${type.slice(0, -7).toUpperCase()}`, // Strip _events
+      DetailType: `TWITTER_${type}`, // Strip _events
       EventBusName: this._eventBusName,
       Source: 'TWITTER',
     };
