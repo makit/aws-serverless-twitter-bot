@@ -61,12 +61,27 @@ export class AnalysisStack extends cdk.Stack {
 
     // Or just do LEX?
 
+
+    // if "truncated": true - use "extended_tweet" "full_text"
+
+
+    // Tweet is in "text" but it can be truncated so this will read the text or the extended text and pass to
+    // the ML API calls
+    const isTruncated = new stepfunctions.Choice(this, 'Is Text Truncated?')
+    const isTruncatedCondition = stepfunctions.Condition.isPresent('$.extended_tweet.full_text');
+    const readNormalText = new stepfunctions.Pass(this, 'Use Normal Text', {
+      outputPath: stepfunctions.JsonPath.stringAt("$.text")
+    });
+    const readExtendedText = new stepfunctions.Pass(this, 'Use Extended Text', {
+      outputPath: stepfunctions.JsonPath.stringAt("$.extended_tweet.full_text")
+    });
+
     const detectEntities = new tasks.CallAwsService(this, "Detect Entities", {
       service: "comprehend",
       action: "detectEntities",
       iamResources: ["*"],
       parameters: {
-        "Text": stepfunctions.JsonPath.stringAt("$.text"), 
+        "Text": stepfunctions.JsonPath.stringAt("$"), 
         "LanguageCode": "en",
       }
     });
@@ -76,10 +91,14 @@ export class AnalysisStack extends cdk.Stack {
       action: "detectSentiment",
       iamResources: ["*"],
       parameters: {
-        "Text": stepfunctions.JsonPath.stringAt("$.text"), 
+        "Text": stepfunctions.JsonPath.stringAt("$"), 
         "LanguageCode": "en",
       }
     });
+
+    const analyseText = new stepfunctions.Parallel(this, 'Analyse Text');
+    analyseText.branch(detectEntities)
+    analyseText.branch(detectSentiment)
 
     const containImage = new stepfunctions.Choice(this, 'Contain Image(s)?');
     const containsImageCondition = stepfunctions.Condition.isPresent('$.entities.media');
@@ -161,8 +180,9 @@ export class AnalysisStack extends cdk.Stack {
     const parallelTextAndImages = new stepfunctions.Parallel(this, 'Analyse Text and Images', {
       inputPath: '$.detail',
     });
-    parallelTextAndImages.branch(detectEntities)
-    parallelTextAndImages.branch(detectSentiment)
+    parallelTextAndImages.branch(isTruncated
+      .when(isTruncatedCondition, readExtendedText.next(analyseText))
+      .otherwise(readNormalText.next(analyseText)))
     parallelTextAndImages.branch(containImage
       .when(containsImageCondition, downloadImagesToS3
         .next(mapImage
