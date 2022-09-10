@@ -4,12 +4,14 @@ import * as cdk from 'aws-cdk-lib';
 import { PlumbingStack } from '../lib/stacks/plumbing-stack';
 import { IngressStack } from '../lib/stacks/ingress-stack';
 import { AnalysisStack } from '../lib/stacks/analysis-stack';
+import { AlertingStack } from '../lib/stacks/alerting-stack';
 
 const app = new cdk.App();
 
 const plumbingStack = new PlumbingStack(app, 'PlumbingStack', {});
 
-new IngressStack(app, 'IngressStack', { plumbingEventBus: plumbingStack.eventBus, twitterIdOfAccount: 999 });
+new IngressStack(app, 'IngressStack', { plumbingEventBus: plumbingStack.eventBus, twitterIdOfAccount: 999 }); //TODO: Change 99 to be input
 
 new AnalysisStack(app, 'AnalysisStack', { plumbingEventBus: plumbingStack.eventBus });
-//TODO: Change 99 to be input
+
+new AlertingStack(app, 'AlertingStack', { plumbingEventBus: plumbingStack.eventBus })

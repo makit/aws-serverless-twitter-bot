@@ -7,6 +7,7 @@ import * as targets from 'aws-cdk-lib/aws-events-targets';
 import * as stepfunctions from 'aws-cdk-lib/aws-stepfunctions';
 import * as tasks from 'aws-cdk-lib/aws-stepfunctions-tasks';
 import DownloadImagesConstruct from '../constructs/analysis/download-images';
+import { JsonPath } from 'aws-cdk-lib/aws-stepfunctions';
 
 export interface AnalysisStackProps extends cdk.StackProps {
   plumbingEventBus: events.IEventBus
@@ -93,7 +94,9 @@ export class AnalysisStack extends cdk.Stack {
 
     const containImage = new stepfunctions.Choice(this, 'Contain Image(s)?');
     const containsImageCondition = stepfunctions.Condition.isPresent('$.ImageUrls');
-    const noImage = new stepfunctions.Pass(this, 'No Images');
+    const noImage = new stepfunctions.Pass(this, 'No Images', {
+      outputPath: JsonPath.DISCARD,
+    });
 
     const downloadImagesToS3 = new tasks.LambdaInvoke(this, 'Download Images to S3', {
       lambdaFunction: this._downloadImagesConstruct.lambda,
@@ -176,7 +179,6 @@ export class AnalysisStack extends cdk.Stack {
           {
             "Detail": {
               "Text": stepfunctions.JsonPath.stringAt('$$.Execution.Input.detail.Text'),
-              "ImageUrls": stepfunctions.JsonPath.stringAt('$$.Execution.Input.detail.ImageUrls'),
               "Author": stepfunctions.JsonPath.stringAt('$$.Execution.Input.detail.Author'),
               "Analysis": stepfunctions.JsonPath.objectAt('$')
             },
