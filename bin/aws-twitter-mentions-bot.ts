@@ -9,7 +9,7 @@ const app = new cdk.App();
 
 const plumbingStack = new PlumbingStack(app, 'PlumbingStack', {});
 
-new IngressStack(app, 'IngressStack', { plumbingEventBus: plumbingStack.eventBus });
+new IngressStack(app, 'IngressStack', { plumbingEventBus: plumbingStack.eventBus, twitterIdOfAccount: 999 });
 
-new AnalysisStack(app, 'AnalysisStack', { plumbingEventBus: plumbingStack.eventBus, twitterIdOfAccount: 999 });
+new AnalysisStack(app, 'AnalysisStack', { plumbingEventBus: plumbingStack.eventBus });
 //TODO: Change 99 to be input

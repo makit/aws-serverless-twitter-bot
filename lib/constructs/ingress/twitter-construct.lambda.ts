@@ -11,7 +11,7 @@ export interface TwitterActivityPayload {
   is_blocked_by: string,
   source: string,
   target: string,
-  tweet_create_events: any[],
+  tweet_create_events: TwitterTweetCreated[],
   favorite_events: any[],
   follow_events: any[],
   unfollow_events: any[],
@@ -26,6 +26,32 @@ export interface TwitterActivityPayload {
   tweet_delete_events: any[],
 }
 
+export interface TwitterUser {
+  id: number,
+  name: string,
+  screen_name: string,
+}
+
+export interface TwitterExtendedTweet {
+  full_text: string
+}
+
+export interface TwitterMedia {
+  media_url_https: String
+}
+
+export interface TwitterEntities {
+  media: TwitterMedia[]
+}
+
+export interface TwitterTweetCreated {
+  user: TwitterUser,
+  entities: TwitterEntities,
+  text: string,
+  truncated: boolean,
+  extended_tweet: TwitterExtendedTweet
+}
+
 interface Dictionary<T> {
   [Key: string]: T;
 }
@@ -33,6 +59,7 @@ interface Dictionary<T> {
 class Twitter {
   private readonly _secretArn: string;
   private readonly _eventBusName: string;
+  private readonly _twitterIdOfAccount: number;
   private readonly _eventBridge: aws.EventBridge;
   private readonly _secretsManager: aws.SecretsManager;
   
@@ -40,14 +67,15 @@ class Twitter {
   private _secret: TwitterApiDetails;
 
   constructor() {
-    const { SecretArn, EventBusName } = process.env;
+    const { SecretArn, EventBusName, TwitterIdOfAccount } = process.env;
 
-    if (!SecretArn || !EventBusName) {
+    if (!SecretArn || !EventBusName || !TwitterIdOfAccount) {
       throw new Error('Missing environment variables');
     }
 
     this._secretArn = SecretArn;
     this._eventBusName = EventBusName;
+    this._twitterIdOfAccount = parseInt(TwitterIdOfAccount);
     this._eventBridge = new aws.EventBridge();
     this._secretsManager = new aws.SecretsManager();
 
@@ -170,6 +198,16 @@ class Twitter {
       }
     }
 
+    // Generic Message Received Event
+    if (payload.tweet_create_events) {
+      payload.tweet_create_events.forEach((e) => {
+        // If it wasn't sent by the twitter account we are receiving events for
+        if (e.user.id !== this._twitterIdOfAccount) {
+          events.push(this.generateMessageReceivedEvent(e)) 
+        }
+      });
+    }
+    
     return events;
   }
 
@@ -177,6 +215,25 @@ class Twitter {
     return {
       Detail: JSON.stringify(detail),
       DetailType: `TWITTER_${type}`, // Strip _events
+      EventBusName: this._eventBusName,
+      Source: 'TWITTER',
+    };
+  }
+
+  /**
+   * Generate an internal payload for all received messages, this is an Anti-corruption Layer Event so that downstream
+   * aren't dependent on the JSON Twitter sends.
+   * @param payload The raw payload for an individual tweet_create_events event
+   * @returns an entry to be pushed to EventBridge
+   */
+  generateMessageReceivedEvent = (payload: TwitterTweetCreated): aws.EventBridge.PutEventsRequestEntry => {
+    return {
+      Detail: JSON.stringify({
+        Text: payload.truncated ? payload.extended_tweet.full_text : payload.text,
+        ImageUrls: payload.entities?.media ? payload.entities.media.map(e => e.media_url_https) : undefined,
+        Author: `${payload.user.name} (${payload.user.screen_name})`,
+      }),
+      DetailType: `MESSAGE_RECEIVED`,
       EventBusName: this._eventBusName,
       Source: 'TWITTER',
     };

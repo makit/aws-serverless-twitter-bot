@@ -7,7 +7,8 @@ import * as events from 'aws-cdk-lib/aws-events';
 
 export interface TwitterConstructProps {
   twitterSecret: secretsmanager.ISecret
-  plumbingEventBus: events.IEventBus
+  plumbingEventBus: events.IEventBus,
+  twitterIdOfAccount: number
 }
 
 /**
@@ -43,6 +44,7 @@ export default class TwitterConstruct extends Construct {
       environment: {
         SecretArn: props.twitterSecret.secretArn,
         EventBusName: props.plumbingEventBus.eventBusName,
+        TwitterIdOfAccount: props.twitterIdOfAccount.toString(),
         NODE_OPTIONS: '--enable-source-maps',
       },
       bundling: {

@@ -2,13 +2,14 @@ import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as events from 'aws-cdk-lib/aws-events';
 import * as s3 from 'aws-cdk-lib/aws-s3';
+import * as iam from 'aws-cdk-lib/aws-iam';
 import * as targets from 'aws-cdk-lib/aws-events-targets';
 import * as stepfunctions from 'aws-cdk-lib/aws-stepfunctions';
 import * as tasks from 'aws-cdk-lib/aws-stepfunctions-tasks';
+import DownloadImagesConstruct from '../constructs/analysis/download-images';
 
 export interface AnalysisStackProps extends cdk.StackProps {
-  plumbingEventBus: events.IEventBus,
-  twitterIdOfAccount: number
+  plumbingEventBus: events.IEventBus
 }
 
 /**
@@ -16,36 +17,36 @@ export interface AnalysisStackProps extends cdk.StackProps {
  */
 export class AnalysisStack extends cdk.Stack {
 
+  private readonly _downloadImagesConstruct: DownloadImagesConstruct;
+  private readonly _analyseBucket: s3.Bucket;
+  private readonly _plumbingEventBus: events.IEventBus;
+
   constructor(scope: Construct, id: string, props: AnalysisStackProps) {
     super(scope, id, props);
 
-    // TODO: Step function
-
-    const analyseBucket = new s3.Bucket(this, 'AnalysisMedia', {
+    this._plumbingEventBus = props.plumbingEventBus;
+    
+    this._analyseBucket = new s3.Bucket(this, 'AnalysisMedia', {
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       autoDeleteObjects: true,
     })
 
-    const analyseTweetStateMachine = this.buildStepFunction(analyseBucket);
+    this._downloadImagesConstruct = new DownloadImagesConstruct(this, 'Download Images', {
+      bucket: this._analyseBucket,
+    })
 
-    // Match on all tweets that were not sent by the user that we are linked to
-    const analyseIncomingTweetRule = new events.Rule(this, 'AnalyseIncomingTweetRule', {
+    const analyseMessageStateMachine = this.buildStepFunction();
+
+    const analyseIncomingMessageRule = new events.Rule(this, 'AnalyseIncomingMessageRule', {
       eventPattern: {
-        detailType: ["TWITTER_TWEETED"],
-        detail: {
-          user: {
-            id: [ { "anything-but": [props.twitterIdOfAccount]} ]
-          }
-        }
+        detailType: ["MESSAGE_RECEIVED"],
       },
       eventBus: props.plumbingEventBus,
     });
-    analyseIncomingTweetRule.addTarget(new targets.SfnStateMachine(analyseTweetStateMachine));
-
-    // Rule on event bus to listen for TWITTER_TWEETED but filter to not current id (param)
+    analyseIncomingMessageRule.addTarget(new targets.SfnStateMachine(analyseMessageStateMachine));
   }
 
-  private buildStepFunction(analyseBucket: s3.IBucket) {
+  private buildStepFunction() {
 
     // DetectEntities (PERSON | LOCATION | ORGANIZATION | COMMERCIAL_ITEM | EVENT | DATE | QUANTITY | TITLE | OTHER)
     // DetectSentiment (POSITIVE | NEGATIVE | NEUTRAL | MIXED)
@@ -61,27 +62,12 @@ export class AnalysisStack extends cdk.Stack {
 
     // Or just do LEX?
 
-
-    // if "truncated": true - use "extended_tweet" "full_text"
-
-
-    // Tweet is in "text" but it can be truncated so this will read the text or the extended text and pass to
-    // the ML API calls
-    const isTruncated = new stepfunctions.Choice(this, 'Is Text Truncated?')
-    const isTruncatedCondition = stepfunctions.Condition.isPresent('$.extended_tweet.full_text');
-    const readNormalText = new stepfunctions.Pass(this, 'Use Normal Text', {
-      outputPath: stepfunctions.JsonPath.stringAt("$.text")
-    });
-    const readExtendedText = new stepfunctions.Pass(this, 'Use Extended Text', {
-      outputPath: stepfunctions.JsonPath.stringAt("$.extended_tweet.full_text")
-    });
-
     const detectEntities = new tasks.CallAwsService(this, "Detect Entities", {
       service: "comprehend",
       action: "detectEntities",
       iamResources: ["*"],
       parameters: {
-        "Text": stepfunctions.JsonPath.stringAt("$"), 
+        "Text": stepfunctions.JsonPath.stringAt("$.Text"), 
         "LanguageCode": "en",
       }
     });
@@ -91,34 +77,30 @@ export class AnalysisStack extends cdk.Stack {
       action: "detectSentiment",
       iamResources: ["*"],
       parameters: {
-        "Text": stepfunctions.JsonPath.stringAt("$"), 
+        "Text": stepfunctions.JsonPath.stringAt("$.Text"), 
         "LanguageCode": "en",
       }
     });
 
-    const analyseText = new stepfunctions.Parallel(this, 'Analyse Text');
+    const analyseText = new stepfunctions.Parallel(this, 'Analyse Text', {
+      resultSelector: {
+        Entities: stepfunctions.JsonPath.stringAt('$[0].Entities'),
+        Sentiment: stepfunctions.JsonPath.stringAt('$[1].Sentiment'),
+      },
+    });
     analyseText.branch(detectEntities)
     analyseText.branch(detectSentiment)
 
     const containImage = new stepfunctions.Choice(this, 'Contain Image(s)?');
-    const containsImageCondition = stepfunctions.Condition.isPresent('$.entities.media');
+    const containsImageCondition = stepfunctions.Condition.isPresent('$.ImageUrls');
     const noImage = new stepfunctions.Pass(this, 'No Images');
 
-    // TODO: Lambda to download all images in event and output list of S3 keys
-    const downloadImagesToS3 = new stepfunctions.Pass(this, 'Download Images to S3');
-
-    const detectFaces = new tasks.CallAwsService(this, "Detect Faces", {
-      service: "rekognition",
-      action: "detectFaces",
-      iamResources: ["*"],
-      parameters: {
-        "Image": {
-          "S3Object": {
-            "Bucket": analyseBucket.bucketName,
-            "Name": stepfunctions.JsonPath.stringAt("$.key")
-          }
-        }
-      }
+    const downloadImagesToS3 = new tasks.LambdaInvoke(this, 'Download Images to S3', {
+      lambdaFunction: this._downloadImagesConstruct.lambda,
+      payload: stepfunctions.TaskInput.fromObject({
+        imageUrls: stepfunctions.JsonPath.listAt('$.ImageUrls'),
+      }),
+      outputPath: '$.Payload',
     });
 
     const detectLabels = new tasks.CallAwsService(this, "Detect Labels", {
@@ -128,11 +110,14 @@ export class AnalysisStack extends cdk.Stack {
       parameters: {
         "Image": {
           "S3Object": {
-            "Bucket": analyseBucket.bucketName,
-            "Name": stepfunctions.JsonPath.stringAt("$.key")
+            "Bucket": this._analyseBucket.bucketName,
+            "Name": stepfunctions.JsonPath.stringAt("$")
           }
         }
-      }
+      },
+      resultSelector: {
+        Labels: stepfunctions.JsonPath.stringAt('$.Labels'),
+      },
     });
 
     const detectText = new tasks.CallAwsService(this, "Detect Text", {
@@ -142,11 +127,14 @@ export class AnalysisStack extends cdk.Stack {
       parameters: {
         "Image": {
           "S3Object": {
-            "Bucket": analyseBucket.bucketName,
-            "Name": stepfunctions.JsonPath.stringAt("$.key")
+            "Bucket": this._analyseBucket.bucketName,
+            "Name": stepfunctions.JsonPath.stringAt("$")
           }
         }
-      }
+      },
+      resultSelector: {
+        TextDetections: stepfunctions.JsonPath.stringAt('$.TextDetections'),
+      },
     });
 
     const recognizeCelebrities = new tasks.CallAwsService(this, "Recognize Celebrities", {
@@ -156,33 +144,61 @@ export class AnalysisStack extends cdk.Stack {
       parameters: {
         "Image": {
           "S3Object": {
-            "Bucket": analyseBucket.bucketName,
-            "Name": stepfunctions.JsonPath.stringAt("$.key")
+            "Bucket": this._analyseBucket.bucketName,
+            "Name": stepfunctions.JsonPath.stringAt("$")
           }
         }
       }
     });
 
     const mapImage = new stepfunctions.Map(this, 'Map through Images', {
-      itemsPath: stepfunctions.JsonPath.stringAt('$.images'),
+      itemsPath: stepfunctions.JsonPath.stringAt('$.keys'),
     });
 
-    const parallelImages = new stepfunctions.Parallel(this, 'Analyse Image');
-    parallelImages.branch(detectFaces);
+    const parallelImages = new stepfunctions.Parallel(this, 'Analyse Image', {
+      resultSelector: {
+        Labels: stepfunctions.JsonPath.stringAt('$[0].Labels'),
+        TextDetections: stepfunctions.JsonPath.stringAt('$[1].TextDetections'),
+        CelebrityFaces: stepfunctions.JsonPath.stringAt('$[2].CelebrityFaces'),
+        UnrecognizedFaces: stepfunctions.JsonPath.stringAt('$[2].UnrecognizedFaces'),
+      },
+    });
     parallelImages.branch(detectLabels);
     parallelImages.branch(detectText);
     parallelImages.branch(recognizeCelebrities);
 
-    const pushResultingEvent = new stepfunctions.Pass(this, 'Push Result');
+    const pushResultingEvent = new tasks.CallAwsService(this, 'Push Result', {
+      service: "eventbridge",
+      action: "putEvents",
+      iamResources: ["*"],
+      parameters: {
+        "Entries": [
+          {
+            "Detail": {
+              "Text": stepfunctions.JsonPath.stringAt('$$.Execution.Input.detail.Text'),
+              "ImageUrls": stepfunctions.JsonPath.stringAt('$$.Execution.Input.detail.ImageUrls'),
+              "Author": stepfunctions.JsonPath.stringAt('$$.Execution.Input.detail.Author'),
+              "Analysis": stepfunctions.JsonPath.objectAt('$')
+            },
+            "DetailType": "MESSAGE_ANALYSED",
+            "EventBusName": this._plumbingEventBus.eventBusName,
+            "Source": stepfunctions.JsonPath.stringAt('$$.Execution.Input.source')
+          }
+        ]
+      }
+    });
 
     const pushFailEvent = new stepfunctions.Pass(this, 'Push Fail Result');
 
     const parallelTextAndImages = new stepfunctions.Parallel(this, 'Analyse Text and Images', {
       inputPath: '$.detail',
+      resultSelector: {
+        TextEntities: stepfunctions.JsonPath.stringAt('$[0].Entities'),
+        TextSentiment: stepfunctions.JsonPath.stringAt('$[0].Sentiment'),
+        Images: stepfunctions.JsonPath.stringAt('$[1]'),
+      },
     });
-    parallelTextAndImages.branch(isTruncated
-      .when(isTruncatedCondition, readExtendedText.next(analyseText))
-      .otherwise(readNormalText.next(analyseText)))
+    parallelTextAndImages.branch(analyseText)
     parallelTextAndImages.branch(containImage
       .when(containsImageCondition, downloadImagesToS3
         .next(mapImage
@@ -193,8 +209,23 @@ export class AnalysisStack extends cdk.Stack {
       .addCatch(pushFailEvent)
       .next(pushResultingEvent);
 
-    return new stepfunctions.StateMachine(this, 'AnalyseTweet', {
+    const sf = new stepfunctions.StateMachine(this, 'AnalyseTweet', {
       definition,
+
     });
+
+    // Allow rekognition to get the images - running via the Step Function role
+    sf.addToRolePolicy(new iam.PolicyStatement({
+      resources: [`${this._analyseBucket.bucketArn}/*`],
+      actions: ['s3:GetObject'],
+    }));
+
+    // CDK doesn't do the permissions correctly...
+    sf.addToRolePolicy(new iam.PolicyStatement({
+      resources: [this._plumbingEventBus.eventBusArn],
+      actions: ['events:PutEvents'],
+    }));
+
+    return sf;
   }
 }

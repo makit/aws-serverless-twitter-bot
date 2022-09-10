@@ -6,7 +6,8 @@ import TwitterConstruct from '../constructs/ingress/twitter-construct';
 import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
 
 export interface IngressStackProps extends cdk.StackProps {
-  plumbingEventBus: events.IEventBus
+  plumbingEventBus: events.IEventBus,
+  twitterIdOfAccount: number
 }
 
 /**
@@ -26,6 +27,7 @@ export class IngressStack extends cdk.Stack {
     const construct = new TwitterConstruct(this, 'TwitterActivity', {
       twitterSecret,
       plumbingEventBus: props.plumbingEventBus,
+      twitterIdOfAccount: props.twitterIdOfAccount,
     });
 
     // Proxy to false so we can define the API model
