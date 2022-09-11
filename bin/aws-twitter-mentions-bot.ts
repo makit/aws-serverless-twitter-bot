@@ -5,6 +5,7 @@ import { PlumbingStack } from '../lib/stacks/plumbing-stack';
 import { IngressStack } from '../lib/stacks/ingress-stack';
 import { AnalysisStack } from '../lib/stacks/analysis-stack';
 import { AlertingStack } from '../lib/stacks/alerting-stack';
+import { AnalyticsStack } from '../lib/stacks/analytics-stack';
 
 const app = new cdk.App();
 
@@ -14,4 +15,6 @@ new IngressStack(app, 'IngressStack', { plumbingEventBus: plumbingStack.eventBus
 
 new AnalysisStack(app, 'AnalysisStack', { plumbingEventBus: plumbingStack.eventBus });
 
-new AlertingStack(app, 'AlertingStack', { plumbingEventBus: plumbingStack.eventBus })
+new AlertingStack(app, 'AlertingStack', { plumbingEventBus: plumbingStack.eventBus });
+
+new AnalyticsStack(app, 'AnalyticsStack', { plumbingEventBus: plumbingStack.eventBus });

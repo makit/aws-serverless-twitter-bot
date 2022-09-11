@@ -14,15 +14,17 @@
     "@types/jest": "^27.5.2",
     "@types/node": "16.11.58",
     "@types/prettier": "2.6.0",
-    "aws-cdk": "2.40.0",
+    "aws-cdk": "2.41.0",
     "jest": "^27.5.1",
     "ts-jest": "^27.1.4",
     "ts-node": "^10.9.1",
     "typescript": "~3.9.7"
   },
   "dependencies": {
+    "@aws-cdk/aws-kinesisfirehose-alpha": "2.41.0-alpha.0",
+    "@aws-cdk/aws-kinesisfirehose-destinations-alpha": "2.41.0-alpha.0",
     "@types/aws-lambda": "^8.10.102",
-    "aws-cdk-lib": "2.40.0",
+    "aws-cdk-lib": "2.41.0",
     "aws-sdk": "^2.1209.0",
     "constructs": "^10.0.0",
     "source-map-support": "^0.5.21"
