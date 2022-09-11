@@ -1,8 +1,8 @@
 {
-  "name": "aws-twitter-mentions-bot",
+  "name": "aws-serverless-message-analyser",
   "version": "0.1.0",
   "bin": {
-    "aws-twitter-mentions-bot": "bin/aws-twitter-mentions-bot.js"
+    "aws-serverless-message-analyser": "bin/aws-serverless-message-analyser.js"
   },
   "scripts": {
     "build": "tsc",

@@ -1,5 +1,5 @@
 {
-  "app": "npx ts-node --prefer-ts-exts bin/aws-twitter-mentions-bot.ts",
+  "app": "npx ts-node --prefer-ts-exts bin/aws-serverless-message-analyser.ts",
   "watch": {
     "include": [
       "**"

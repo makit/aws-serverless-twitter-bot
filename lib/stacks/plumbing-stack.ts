@@ -40,9 +40,17 @@ export class PlumbingStack extends cdk.Stack {
    */
   private addCatchAllRuleToDebugLog() {
     const catchAllLogGroup = new logs.LogGroup(this, 'PlumbingEvents', {
-      retention: logs.RetentionDays.ONE_WEEK,
+      retention: logs.RetentionDays.ONE_MONTH,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
+
+    this.createMetricFilter(catchAllLogGroup, 'MESSAGE_RECEIVED');
+    this.createMetricFilter(catchAllLogGroup, 'MESSAGE_ANALYSED');
+    this.createMetricFilter(catchAllLogGroup, 'TWITTER_FAVOURITED');
+    this.createMetricFilter(catchAllLogGroup, 'TWITTER_FOLLOWED');
+    this.createMetricFilter(catchAllLogGroup, 'TWITTER_UNFOLLOWED');
+    this.createMetricFilter(catchAllLogGroup, 'TWITTER_DM_RECEIVED');
+    this.createMetricFilter(catchAllLogGroup, 'TWITTER_DELETED');
 
     const catchAllRule = new events.Rule(this, 'CatchAllRule', {
       eventPattern: {
@@ -51,5 +59,14 @@ export class PlumbingStack extends cdk.Stack {
       eventBus: this.eventBus,
     });
     catchAllRule.addTarget(new targets.CloudWatchLogGroup(catchAllLogGroup));
+  }
+
+  private createMetricFilter(catchAllLogGroup: cdk.aws_logs.LogGroup, metricName: string) {
+    new logs.MetricFilter(this, `MetricFilter${metricName}`, {
+      logGroup: catchAllLogGroup,
+      metricNamespace: 'ServerlessMessageAnalyser',
+      metricName,
+      filterPattern: logs.FilterPattern.stringValue('$.detail-type', '=', metricName),
+    });
   }
 }

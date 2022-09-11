@@ -27,9 +27,13 @@ export class AnalysisStack extends cdk.Stack {
 
     this._plumbingEventBus = props.plumbingEventBus;
     
+    // Stores images that are downloaded for analysis - don't need persistence here so expire items after 1 day.
     this._analyseBucket = new s3.Bucket(this, 'AnalysisMedia', {
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       autoDeleteObjects: true,
+      lifecycleRules: [{
+        expiration: cdk.Duration.days(1),        
+      }]
     })
 
     this._downloadImagesConstruct = new DownloadImagesConstruct(this, 'Download Images', {
@@ -48,21 +52,6 @@ export class AnalysisStack extends cdk.Stack {
   }
 
   private buildStepFunction() {
-
-    // DetectEntities (PERSON | LOCATION | ORGANIZATION | COMMERCIAL_ITEM | EVENT | DATE | QUANTITY | TITLE | OTHER)
-    // DetectSentiment (POSITIVE | NEGATIVE | NEUTRAL | MIXED)
-    // DetectKeyPhrases - maybe later
-
-    // for entities.media (array) where type = photo - download media_url_https and then run rekognition
-    // DetectFaces - returns emotions, eyesopen, eyeglasses, gender, mustache, pose, smile, sunglasses
-    // DetectLabels - returns list of things
-    // DetectText - Image to text
-    // RecognizeCelebrities
-
-    // DetectModerationLabels - maybe later
-
-    // Or just do LEX?
-
     const detectEntities = new tasks.CallAwsService(this, "Detect Entities", {
       service: "comprehend",
       action: "detectEntities",

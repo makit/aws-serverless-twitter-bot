@@ -187,7 +187,7 @@ class Twitter {
       'direct_message_events': 'DM_RECEIVED',
       'direct_message_indicate_typing_events': 'DM_TYPING',
       'direct_message_mark_read_events': 'DM_MARKED_READ',
-      'tweet_delete_events': 'TWEET_DELETED',
+      'tweet_delete_events': 'DELETED',
     }
 
     for (const type in types) {
