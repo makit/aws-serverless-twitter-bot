@@ -231,7 +231,7 @@ class Twitter {
       Detail: JSON.stringify({
         Text: payload.truncated ? payload.extended_tweet.full_text : payload.text,
         ImageUrls: payload.entities?.media ? payload.entities.media.map(e => e.media_url_https) : undefined,
-        Author: `${payload.user.name} (${payload.user.screen_name})`,
+        Author: payload.user.screen_name,
       }),
       DetailType: `MESSAGE_RECEIVED`,
       EventBusName: this._eventBusName,
