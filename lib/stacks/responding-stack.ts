@@ -93,8 +93,21 @@ export class RespondingStack extends cdk.Stack {
     const fallbackIntent: lex.CfnBot.IntentProperty = {
       name: 'FallbackIntent',
       parentIntentSignature: 'AMAZON.FallbackIntent',
+      intentClosingSetting: {
+        isActive: true,
+        closingResponse: {
+          messageGroupsList: [
+            {
+              message: {
+                plainTextMessage: {
+                  value: 'You can ask me for a joke, fact or send an image with faces in to get blurred.'
+                }
+              }
+            }
+          ]
+        }
+      }
     };
-    // You can ask me for a joke, fact or send an image with faces in to get blurred.
 
     const bot = new lex.CfnBot(this, 'RespondBot', {
       name: 'MessageResponderBot',
@@ -113,7 +126,7 @@ export class RespondingStack extends cdk.Stack {
       ]
     });
 
-    const botVersion = new lex.CfnBotVersion(this, 'RespondBotVersion', {
+    const botVersion = new lex.CfnBotVersion(this, 'RespondBotVers', {
       botId: bot.ref,
       botVersionLocaleSpecification: [{
           botVersionLocaleDetails: {
