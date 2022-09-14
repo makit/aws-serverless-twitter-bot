@@ -1,5 +1,6 @@
 import * as aws from 'aws-sdk';
 import { EventBridgeEvent } from 'aws-lambda';
+import gm from 'gm';
 
 type MessageAnalysedDetailType = "MESSAGE_ANALYSED";
 
@@ -26,7 +27,7 @@ interface TwitterImage {
 
 interface TwitterImageAnalysis {
   CelebrityFaces: TwitterFaceDetection[],
-  UnrecognizedFaces: any[],
+  UnrecognizedFaces: TwitterFace[],
   Labels: any[],
   TextDetections: any[]
 }
@@ -63,6 +64,7 @@ class ProcessImages {
     }
 
     this._bucket = Bucket;
+    this._eventBusName = EventBusName;
     this._s3 = new aws.S3();
     this._eventBridge = new aws.EventBridge();
 
@@ -77,31 +79,100 @@ class ProcessImages {
       return false;
     }
 
-    
+    // We will only process the first one for simplicity
+    const imageToAnalyse = event.detail.Analysis.Images[0];
+
+    const manipulatedImage = await this.processImage(imageToAnalyse);
    
-    // console.info('Response:', JSON.stringify(response, null, 2));
+    console.log('Image has been manipulated');
 
-    // if (response && response.messages && response.messages.length > 0 && response.messages[0].content) {
-    //   const respondEvent = this.generateEvent(`@${event.detail.Author} ${response.messages[0].content}`, event.detail.Twitter);
+    // Overwrite the image
+    const response = await this._s3.putObject({
+      Bucket: this._bucket,
+      Key: imageToAnalyse.Key,
+      Body: manipulatedImage,
+    }).promise();
 
-    //   console.info('Pushing to event bridge', JSON.stringify(respondEvent, null, 2));
+    console.log('Overwritten image', response);
 
-    //   const putResponse = await this._eventBridge.putEvents({
-    //     Entries: [respondEvent],
-    //   }).promise();
+    const celebList = imageToAnalyse.Analysis.CelebrityFaces.map(f => f.Name);
+    const celebs = celebList.length > 0 ? `I recognised: ${celebList.join(",")}` : 'Sorry I recognised no celebrities!';
 
-    //   console.log('Pushed to EventBridge', JSON.stringify(putResponse, null, 2))
-    // }
+    if (response) {
+      const respondEvent = this.generateEvent(`@${event.detail.Author} ${celebs}`, event.detail.Twitter, imageToAnalyse.Key);
+
+      console.info('Pushing to event bridge', JSON.stringify(respondEvent, null, 2));
+
+      const putResponse = await this._eventBridge.putEvents({
+        Entries: [respondEvent],
+      }).promise();
+
+      console.log('Pushed to EventBridge', JSON.stringify(putResponse, null, 2))
+    }
 
     return true;
   };
 
-   generateEvent = (message: string, detail: TwitterDetail): aws.EventBridge.PutEventsRequestEntry => {
+  processImage = async (imageSpec: TwitterImage) : Promise<any> => {
+    console.info('Downloading', imageSpec.Key);
+    
+    const response = await this._s3.getObject({
+      Bucket: this._bucket,
+      Key: imageSpec.Key,
+    }).promise();
+
+    return await new Promise( function(resolve, reject) {
+      try {
+
+        let img = gm(response.Body);
+
+        img.size(function(err: any, value: any){
+          if (err) {
+            reject(err);
+          } else {
+            console.info('Processing Unrecognized faces', imageSpec.Key);
+            for(const unknownFace of imageSpec.Analysis.UnrecognizedFaces) {
+              img.region(
+                unknownFace.BoundingBox.Width * value.width, 
+                unknownFace.BoundingBox.Height * value.height, 
+                unknownFace.BoundingBox.Left * value.width, 
+                unknownFace.BoundingBox.Top * value.height).blur(0, 30);
+            }
+
+            console.info('Processing celebrity faces', imageSpec.Key);
+            for(const celebFace of imageSpec.Analysis.CelebrityFaces) {
+              img.stroke("#ffffff").drawCircle(
+                celebFace.Face.BoundingBox.Left * value.width, 
+                celebFace.Face.BoundingBox.Top * value.height,
+                (celebFace.Face.BoundingBox.Left * value.width)+(celebFace.Face.BoundingBox.Width * value.width),
+                (celebFace.Face.BoundingBox.Height* value.height)+(celebFace.Face.BoundingBox.Top* value.height));
+
+              img.drawText(celebFace.Face.BoundingBox.Left* value.width, celebFace.Face.BoundingBox.Top* value.height, celebFace.Name);
+            }
+  
+            img.toBuffer('JPG', function(err: any, buffer: any) {
+              if(err) {
+                reject(err);
+              } else {
+                resolve(buffer);
+              }
+            });
+          }
+        });
+      } catch (error) {
+        console.error('Failed doing image', error);
+        reject(error);
+      }
+    });
+  }
+
+  generateEvent = (message: string, detail: TwitterDetail, imageKey: string): aws.EventBridge.PutEventsRequestEntry => {
     return {
       Detail: JSON.stringify({
         Text: message,
         ReplyToUserId: detail.UserId,
         ReplyToTweetId: detail.TweetId,
+        ImageKey: imageKey,
       }),
       DetailType: `SEND_TWEET`,
       EventBusName: this._eventBusName,

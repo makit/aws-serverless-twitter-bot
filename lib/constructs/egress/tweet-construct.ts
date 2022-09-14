@@ -2,12 +2,14 @@ import { Construct } from 'constructs';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as lambdanode from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as iam from 'aws-cdk-lib/aws-iam';
+import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
 import * as events from 'aws-cdk-lib/aws-events';
 
 export interface TweetConstructProps {
   twitterSecret: secretsmanager.ISecret
   plumbingEventBus: events.IEventBus,
+  bucket: s3.IBucket,
 }
 
 /**
@@ -31,10 +33,17 @@ export default class TweetConstruct extends Construct {
         actions: ['secretsmanager:GetSecretValue'],
       }),
     );
+    role.addToPolicy(
+      new iam.PolicyStatement({
+        resources: [`${props.bucket.bucketArn}/*`],
+        actions: ['s3:GetObject'],
+      }),
+    );
 
     this.lambda = new lambdanode.NodejsFunction(this, 'lambda', {
       runtime: lambda.Runtime.NODEJS_16_X,
       environment: {
+        Bucket: props.bucket.bucketName,
         SecretArn: props.twitterSecret.secretArn,
         NODE_OPTIONS: '--enable-source-maps',
       },

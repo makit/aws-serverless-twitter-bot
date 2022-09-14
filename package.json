@@ -28,6 +28,7 @@
     "aws-cdk-lib": "2.41.0",
     "aws-sdk": "^2.1209.0",
     "constructs": "^10.0.0",
+    "gm": "^1.23.1",
     "source-map-support": "^0.5.21",
     "twitter-api-client": "^1.6.1"
   }

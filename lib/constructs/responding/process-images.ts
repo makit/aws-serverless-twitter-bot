@@ -1,4 +1,5 @@
 import { Construct } from 'constructs';
+import * as cdk from 'aws-cdk-lib';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as lambdanode from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as iam from 'aws-cdk-lib/aws-iam';
@@ -37,8 +38,12 @@ export default class ProcessImagesConstruct extends Construct {
       }),
     );
 
+    // From https://github.com/rpidanny/gm-lambda-layer
+    const layer = lambda.LayerVersion.fromLayerVersionArn(this, 'GMLayer', 'arn:aws:lambda:eu-west-1:175033217214:layer:graphicsmagick:2');
+
     this.lambda = new lambdanode.NodejsFunction(this, 'lambda', {
       runtime: lambda.Runtime.NODEJS_16_X,
+      layers: [layer],
       environment: {
         Bucket: props.bucket.bucketName,
         EventBusName: props.plumbingEventBus.eventBusName,
@@ -48,6 +53,8 @@ export default class ProcessImagesConstruct extends Construct {
         minify: true,
         sourceMap: true,
       },
+      timeout: cdk.Duration.seconds(5),
+      memorySize: 256,
       role,
     });
   }

@@ -1,12 +1,14 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as events from 'aws-cdk-lib/aws-events';
+import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as targets from 'aws-cdk-lib/aws-events-targets';
 import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
 import TweetConstruct from '../constructs/egress/tweet-construct';
 
 export interface EgressStackProps extends cdk.StackProps {
   plumbingEventBus: events.IEventBus,
+  analysisBucket: s3.IBucket,
 }
 
 /**
@@ -25,6 +27,7 @@ export class EgressStack extends cdk.Stack {
     const tweetConstruct = new TweetConstruct(this, 'TweetConstruct', {
       twitterSecret,
       plumbingEventBus: props.plumbingEventBus,
+      bucket: props.analysisBucket,
     });
 
     const sendTweetRule = new events.Rule(this, 'SendTweetRule', {

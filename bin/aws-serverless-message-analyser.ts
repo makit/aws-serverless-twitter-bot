@@ -23,4 +23,4 @@ new AnalyticsStack(app, 'AnalyticsStack', { plumbingEventBus: plumbingStack.even
 
 new RespondingStack(app, 'RespondingStack', { plumbingEventBus: plumbingStack.eventBus, analysisBucket: analysisStack.analyseBucket });
 
-new EgressStack(app, 'EgressStack', { plumbingEventBus: plumbingStack.eventBus });
+new EgressStack(app, 'EgressStack', { plumbingEventBus: plumbingStack.eventBus, analysisBucket: analysisStack.analyseBucket });

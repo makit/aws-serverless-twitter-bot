@@ -15,24 +15,29 @@ interface MessageAnalysedDetail {
   Text: string,
   ReplyToUserId: string,
   ReplyToTweetId: string,
+  ImageKey: string,
 }
 
 class Tweet {
   private readonly _secretArn: string;
+  private readonly _bucket: string;
   private readonly _secretsManager: aws.SecretsManager;
+  private readonly _s3: aws.S3;
   
   // We will lazy load the client for efficiency across reused instances
   private _twitterClient: TwitterClient;
 
   constructor() {
-    const { SecretArn } = process.env;
+    const { SecretArn, Bucket } = process.env;
 
-    if (!SecretArn) {
+    if (!SecretArn || !Bucket) {
       throw new Error('Missing environment variables');
     }
 
     this._secretArn = SecretArn;
+    this._bucket = Bucket;
     this._secretsManager = new aws.SecretsManager();
+    this._s3 = new aws.S3();
 
     console.info('Initialised');
   }
@@ -53,11 +58,30 @@ class Tweet {
         });
       }
   
+      let mediaId = undefined;
+
+      if (event.detail.ImageKey) {
+
+        const response = await this._s3.getObject({
+          Bucket: this._bucket,
+          Key: event.detail.ImageKey,
+        }).promise();
+
+        const uploadedMedia = await this._twitterClient.media.mediaUpload({
+          media_data: response.Body?.toString('base64'),
+        });
+
+        mediaId = uploadedMedia.media_id_string;
+      }
+
       const response = await this._twitterClient.tweetsV2.createTweet({
         reply: {
           in_reply_to_tweet_id: event.detail.ReplyToTweetId.toString(),
         },
         text: event.detail.Text,
+        media: mediaId === undefined ? undefined : {
+          media_ids: [mediaId],
+        }
       });
   
       console.info('Tweet Response:', JSON.stringify(response, null, 2));
