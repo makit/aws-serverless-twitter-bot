@@ -15,12 +15,12 @@ const plumbingStack = new PlumbingStack(app, 'PlumbingStack', {});
 
 new IngressStack(app, 'IngressStack', { plumbingEventBus: plumbingStack.eventBus, twitterIdOfAccount: 199850204 }); //TODO: Change 99 to be input
 
-new AnalysisStack(app, 'AnalysisStack', { plumbingEventBus: plumbingStack.eventBus });
+const analysisStack = new AnalysisStack(app, 'AnalysisStack', { plumbingEventBus: plumbingStack.eventBus });
 
 new AlertingStack(app, 'AlertingStack', { plumbingEventBus: plumbingStack.eventBus });
 
 new AnalyticsStack(app, 'AnalyticsStack', { plumbingEventBus: plumbingStack.eventBus });
 
-new RespondingStack(app, 'RespondingStack', { plumbingEventBus: plumbingStack.eventBus });
+new RespondingStack(app, 'RespondingStack', { plumbingEventBus: plumbingStack.eventBus, analysisBucket: analysisStack.analyseBucket });
 
-new EgressStack(app, 'EgressStack', { plumbingEventBus: plumbingStack.eventBus }); //TODO: Change 99 to be input
+new EgressStack(app, 'EgressStack', { plumbingEventBus: plumbingStack.eventBus });

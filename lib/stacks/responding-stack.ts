@@ -4,12 +4,15 @@ import * as events from 'aws-cdk-lib/aws-events';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as lex from 'aws-cdk-lib/aws-lex';
 import * as iam from 'aws-cdk-lib/aws-iam';
+import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as targets from 'aws-cdk-lib/aws-events-targets';
 import ChatBotConstruct from '../constructs/responding/chat-bot';
 import ChatBotFulfillmentConstruct from '../constructs/responding/chat-bot-fulfillment';
+import ProcessImagesConstruct from '../constructs/responding/process-images';
 
 export interface RespondingStackProps extends cdk.StackProps {
-  plumbingEventBus: events.IEventBus
+  plumbingEventBus: events.IEventBus,
+  analysisBucket: s3.IBucket
 }
 
 /**
@@ -25,9 +28,7 @@ export class RespondingStack extends cdk.Stack {
 
     this._eventBus = props.plumbingEventBus;
 
-
-
-    const lambda = this.createTextResponseResources();
+    const textLambda = this.createTextResponseResources();
 
     // Match on anything that has text which is more than the account username and which doesn't have images
     // Images will be dealt with my a different lambda
@@ -45,7 +46,29 @@ export class RespondingStack extends cdk.Stack {
       },
       eventBus: props.plumbingEventBus,
     });
-    analyseIncomingMessageRule.addTarget(new targets.LambdaFunction(lambda));
+    analyseIncomingMessageRule.addTarget(new targets.LambdaFunction(textLambda));
+
+    
+    const processImages = new ProcessImagesConstruct(this, 'ProcessImages', {
+      plumbingEventBus: props.plumbingEventBus,
+      bucket: props.analysisBucket,
+    })
+
+    // Match on anything that has at least one image
+    const analyseImageRule = new events.Rule(this, 'RespondImageRule', {
+      eventPattern: {
+        detailType: ['MESSAGE_ANALYSED'],
+        detail: {
+          Analysis: {
+            Images: {
+              Key: [ { "exists": true  } ]
+            }
+          }
+        }
+      },
+      eventBus: props.plumbingEventBus,
+    });
+    analyseImageRule.addTarget(new targets.LambdaFunction(processImages.lambda));
   }
 
   private createTextResponseResources(): lambda.IFunction {

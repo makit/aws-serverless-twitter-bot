@@ -1,75 +1,117 @@
-// TODO
+import * as aws from 'aws-sdk';
+import { EventBridgeEvent } from 'aws-lambda';
 
-// import * as aws from 'aws-sdk';
-// import * as crypto from 'crypto';
-// import * as https from 'https';
-// import * as stream from 'stream';
-// import * as path from 'path';
+type MessageAnalysedDetailType = "MESSAGE_ANALYSED";
 
-// interface DownloadImagesEvent {
-//   imageUrls: string[]
-// }
+interface MessageAnalysedDetail {
+  Author: string,
+  Text: string,
+  Twitter: TwitterDetail,
+  Analysis: TwitterAnalysis,
+}
 
-// interface DownloadImagesResponse {
-//   keys: string[]
-// }
+interface TwitterDetail {
+  UserId: string,
+  TweetId: string,
+}
 
-// class DownloadImages {
-//   private readonly _bucket: string;
-//   private readonly _s3: aws.S3;
+interface TwitterAnalysis {
+  Images: TwitterImage[],
+}
 
-//   constructor() {
-//     const { Bucket } = process.env;
+interface TwitterImage {
+  Key: string,
+  Analysis: TwitterImageAnalysis,
+}
 
-//     if (!Bucket) {
-//       throw new Error('Missing environment variables');
-//     }
+interface TwitterImageAnalysis {
+  CelebrityFaces: TwitterFaceDetection[],
+  UnrecognizedFaces: any[],
+  Labels: any[],
+  TextDetections: any[]
+}
 
-//     this._bucket = Bucket;
-//     this._s3 = new aws.S3();
+interface TwitterFaceDetection {
+  Face: TwitterFace,
+  Name: string,
+  Urls: string[],
+}
 
-//     console.info('Initialised');
-//   }
+interface TwitterFace {
+  BoundingBox: BoundingBox,
+  Confidence: number,
+}
 
-//   handler = async (event: DownloadImagesEvent): Promise<DownloadImagesResponse> => {
-//     console.info('Received Event:', JSON.stringify(event, null, 2));
+interface BoundingBox {
+  Height: number,
+  Left: number,
+  Top: number,
+  Width: number,
+}
 
-//     var promises = event.imageUrls.map(e => this.handleSingleImage(e));
+class ProcessImages {
+  private readonly _eventBusName: string;
+  private readonly _bucket: string;
+  private readonly _s3: aws.S3;
+  private readonly _eventBridge: aws.EventBridge;
+
+  constructor() {
+    const { Bucket, EventBusName } = process.env;
+
+    if (!Bucket || !EventBusName) {
+      throw new Error('Missing environment variables');
+    }
+
+    this._bucket = Bucket;
+    this._s3 = new aws.S3();
+    this._eventBridge = new aws.EventBridge();
+
+    console.info('Initialised');
+  }
+
+  handler = async (event: EventBridgeEvent<MessageAnalysedDetailType, MessageAnalysedDetail>): Promise<boolean> => {
+    console.info('Received Event:', JSON.stringify(event, null, 2));
+
+    // Can't handle if no images
+    if (event.detail.Analysis.Images.length <= 0) {
+      return false;
+    }
+
     
-//     console.info('Waiting for all promises to complete');
-//     const results = await Promise.allSettled(promises);
-//     console.info('All promises completed', JSON.stringify(results, null, 2));
+   
+    // console.info('Response:', JSON.stringify(response, null, 2));
 
-//     const fulfilledResults = (results.filter(c=>c.status === 'fulfilled') as PromiseFulfilledResult<string>[]);
-//     return {
-//       keys: fulfilledResults.map(k => k.value),
-//     }
-//   };
+    // if (response && response.messages && response.messages.length > 0 && response.messages[0].content) {
+    //   const respondEvent = this.generateEvent(`@${event.detail.Author} ${response.messages[0].content}`, event.detail.Twitter);
 
-//   handleSingleImage = async (url: string): Promise<string> => {
-    
-//     const passthroughStream = new stream.PassThrough();
-//     https.get(url, resp => resp.pipe(passthroughStream));
+    //   console.info('Pushing to event bridge', JSON.stringify(respondEvent, null, 2));
 
-//     const date = new Date();
-//     const key = `${date.getFullYear()}/${date.getMonth()}/${date.getDay()}/${crypto.randomUUID()}${path.extname(url)}`;
+    //   const putResponse = await this._eventBridge.putEvents({
+    //     Entries: [respondEvent],
+    //   }).promise();
 
-//     console.info('Putting image into bucket', url, key);
+    //   console.log('Pushed to EventBridge', JSON.stringify(putResponse, null, 2))
+    // }
 
-//     const result = await this._s3.upload({
-//       Bucket: this._bucket,
-//       Key: key,
-//       Body: passthroughStream,
-//     }).promise();
+    return true;
+  };
 
-//     console.info('Image put into bucket', url, key, result);
+   generateEvent = (message: string, detail: TwitterDetail): aws.EventBridge.PutEventsRequestEntry => {
+    return {
+      Detail: JSON.stringify({
+        Text: message,
+        ReplyToUserId: detail.UserId,
+        ReplyToTweetId: detail.TweetId,
+      }),
+      DetailType: `SEND_TWEET`,
+      EventBusName: this._eventBusName,
+      Source: 'BOT',
+    };
+  }
+}
 
-//     return key;
-//   }
-// }
+// Initialise class outside of the handler so context is reused.
+const processImages = new ProcessImages();
 
-// // Initialise class outside of the handler so context is reused.
-// const downloadImages = new DownloadImages();
-
-// // The handler simply executes the object handler
-// export const handler = async (event: DownloadImagesEvent): Promise<DownloadImagesResponse> => downloadImages.handler(event);
+// The handler simply executes the object handler
+export const handler = async (event: EventBridgeEvent<MessageAnalysedDetailType, MessageAnalysedDetail>): Promise<boolean> => processImages.handler(event);

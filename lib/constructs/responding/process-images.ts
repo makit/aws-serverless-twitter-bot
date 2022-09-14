@@ -3,9 +3,11 @@ import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as lambdanode from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as s3 from 'aws-cdk-lib/aws-s3';
+import * as events from 'aws-cdk-lib/aws-events';
 
 export interface ProcessImagesConstructProps {
-  bucket: s3.IBucket
+  bucket: s3.IBucket,
+  plumbingEventBus: events.IEventBus,
 }
 
 /**
@@ -28,11 +30,18 @@ export default class ProcessImagesConstruct extends Construct {
         actions: ['s3:GetObject', 's3:PutObject'],
       }),
     );
+    role.addToPolicy(
+      new iam.PolicyStatement({
+        resources: [props.plumbingEventBus.eventBusArn],
+        actions: ['events:PutEvents'],
+      }),
+    );
 
     this.lambda = new lambdanode.NodejsFunction(this, 'lambda', {
       runtime: lambda.Runtime.NODEJS_16_X,
       environment: {
         Bucket: props.bucket.bucketName,
+        EventBusName: props.plumbingEventBus.eventBusName,
         NODE_OPTIONS: '--enable-source-maps',
       },
       bundling: {

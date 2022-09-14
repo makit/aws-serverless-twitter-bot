@@ -18,8 +18,8 @@ export interface AnalysisStackProps extends cdk.StackProps {
  */
 export class AnalysisStack extends cdk.Stack {
 
+  public readonly analyseBucket: s3.Bucket;
   private readonly _downloadImagesConstruct: DownloadImagesConstruct;
-  private readonly _analyseBucket: s3.Bucket;
   private readonly _plumbingEventBus: events.IEventBus;
 
   constructor(scope: Construct, id: string, props: AnalysisStackProps) {
@@ -28,7 +28,7 @@ export class AnalysisStack extends cdk.Stack {
     this._plumbingEventBus = props.plumbingEventBus;
     
     // Stores images that are downloaded for analysis - don't need persistence here so expire items after 1 day.
-    this._analyseBucket = new s3.Bucket(this, 'AnalysisMedia', {
+    this.analyseBucket = new s3.Bucket(this, 'AnalysisMedia', {
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       autoDeleteObjects: true,
       lifecycleRules: [{
@@ -37,7 +37,7 @@ export class AnalysisStack extends cdk.Stack {
     })
 
     this._downloadImagesConstruct = new DownloadImagesConstruct(this, 'Download Images', {
-      bucket: this._analyseBucket,
+      bucket: this.analyseBucket,
     })
 
     const analyseMessageStateMachine = this.buildStepFunction();
@@ -102,7 +102,7 @@ export class AnalysisStack extends cdk.Stack {
       parameters: {
         "Image": {
           "S3Object": {
-            "Bucket": this._analyseBucket.bucketName,
+            "Bucket": this.analyseBucket.bucketName,
             "Name": stepfunctions.JsonPath.stringAt("$.Key")
           }
         }
@@ -119,7 +119,7 @@ export class AnalysisStack extends cdk.Stack {
       parameters: {
         "Image": {
           "S3Object": {
-            "Bucket": this._analyseBucket.bucketName,
+            "Bucket": this.analyseBucket.bucketName,
             "Name": stepfunctions.JsonPath.stringAt("$.Key")
           }
         }
@@ -136,7 +136,7 @@ export class AnalysisStack extends cdk.Stack {
       parameters: {
         "Image": {
           "S3Object": {
-            "Bucket": this._analyseBucket.bucketName,
+            "Bucket": this.analyseBucket.bucketName,
             "Name": stepfunctions.JsonPath.stringAt("$.Key")
           }
         }
@@ -212,7 +212,7 @@ export class AnalysisStack extends cdk.Stack {
 
     // Allow rekognition to get the images - running via the Step Function role
     sf.addToRolePolicy(new iam.PolicyStatement({
-      resources: [`${this._analyseBucket.bucketArn}/*`],
+      resources: [`${this.analyseBucket.bucketArn}/*`],
       actions: ['s3:GetObject'],
     }));
 
