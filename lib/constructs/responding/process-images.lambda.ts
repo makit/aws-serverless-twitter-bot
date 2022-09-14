@@ -130,24 +130,24 @@ class ProcessImages {
           if (err) {
             reject(err);
           } else {
+            console.info('Processing celebrity faces', imageSpec.Key);
+            for(const celebFace of imageSpec.Analysis.CelebrityFaces) {
+
+              const x = (celebFace.Face.BoundingBox.Left * value.width)+((celebFace.Face.BoundingBox.Width * value.width)/2);
+              const y = celebFace.Face.BoundingBox.Top* value.height;
+
+              console.log('Drawing text', x, y);
+
+              img.stroke("red", 1).drawText(x, y, celebFace.Name);
+            }
+
             console.info('Processing Unrecognized faces', imageSpec.Key);
             for(const unknownFace of imageSpec.Analysis.UnrecognizedFaces) {
               img.region(
                 unknownFace.BoundingBox.Width * value.width, 
                 unknownFace.BoundingBox.Height * value.height, 
                 unknownFace.BoundingBox.Left * value.width, 
-                unknownFace.BoundingBox.Top * value.height).blur(0, 30);
-            }
-
-            console.info('Processing celebrity faces', imageSpec.Key);
-            for(const celebFace of imageSpec.Analysis.CelebrityFaces) {
-              img.stroke("#ffffff").drawCircle(
-                celebFace.Face.BoundingBox.Left * value.width, 
-                celebFace.Face.BoundingBox.Top * value.height,
-                (celebFace.Face.BoundingBox.Left * value.width)+(celebFace.Face.BoundingBox.Width * value.width),
-                (celebFace.Face.BoundingBox.Height* value.height)+(celebFace.Face.BoundingBox.Top* value.height));
-
-              img.drawText(celebFace.Face.BoundingBox.Left* value.width, celebFace.Face.BoundingBox.Top* value.height, celebFace.Name);
+                unknownFace.BoundingBox.Top * value.height).blur(25);
             }
   
             img.toBuffer('JPG', function(err: any, buffer: any) {
