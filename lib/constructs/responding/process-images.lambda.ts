@@ -138,17 +138,18 @@ class ProcessImages {
 
               console.log('Drawing text', x, y);
 
-              img.stroke("red", 1).drawText(x, y, celebFace.Name);
+              img.stroke("red", 1).fontSize(18).drawText(x, y, celebFace.Name);
             }
 
-            console.info('Processing Unrecognized faces', imageSpec.Key);
-            for(const unknownFace of imageSpec.Analysis.UnrecognizedFaces) {
-              img.region(
-                unknownFace.BoundingBox.Width * value.width, 
-                unknownFace.BoundingBox.Height * value.height, 
-                unknownFace.BoundingBox.Left * value.width, 
-                unknownFace.BoundingBox.Top * value.height).blur(25);
-            }
+            // One option is to blue the unknowns
+            // console.info('Processing Unrecognized faces', imageSpec.Key);
+            // for(const unknownFace of imageSpec.Analysis.UnrecognizedFaces) {
+            //   img.region(
+            //     unknownFace.BoundingBox.Width * value.width, 
+            //     unknownFace.BoundingBox.Height * value.height, 
+            //     unknownFace.BoundingBox.Left * value.width, 
+            //     unknownFace.BoundingBox.Top * value.height).blur(20);
+            // }
   
             img.toBuffer('JPG', function(err: any, buffer: any) {
               if(err) {
