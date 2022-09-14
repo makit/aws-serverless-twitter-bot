@@ -9,7 +9,11 @@ interface DownloadImagesEvent {
 }
 
 interface DownloadImagesResponse {
-  keys: string[]
+  Images: DownloadImagesImage[]
+}
+
+interface DownloadImagesImage{
+  Key: string
 }
 
 class DownloadImages {
@@ -40,7 +44,7 @@ class DownloadImages {
 
     const fulfilledResults = (results.filter(c=>c.status === 'fulfilled') as PromiseFulfilledResult<string>[]);
     return {
-      keys: fulfilledResults.map(k => k.value),
+      Images: fulfilledResults.map(k => { return { Key: k.value } }),
     }
   };
 

@@ -103,7 +103,7 @@ export class AnalysisStack extends cdk.Stack {
         "Image": {
           "S3Object": {
             "Bucket": this._analyseBucket.bucketName,
-            "Name": stepfunctions.JsonPath.stringAt("$")
+            "Name": stepfunctions.JsonPath.stringAt("$.Key")
           }
         }
       },
@@ -120,7 +120,7 @@ export class AnalysisStack extends cdk.Stack {
         "Image": {
           "S3Object": {
             "Bucket": this._analyseBucket.bucketName,
-            "Name": stepfunctions.JsonPath.stringAt("$")
+            "Name": stepfunctions.JsonPath.stringAt("$.Key")
           }
         }
       },
@@ -137,14 +137,14 @@ export class AnalysisStack extends cdk.Stack {
         "Image": {
           "S3Object": {
             "Bucket": this._analyseBucket.bucketName,
-            "Name": stepfunctions.JsonPath.stringAt("$")
+            "Name": stepfunctions.JsonPath.stringAt("$.Key")
           }
         }
       }
     });
 
     const mapImage = new stepfunctions.Map(this, 'Map through Images', {
-      itemsPath: stepfunctions.JsonPath.stringAt('$.keys'),
+      itemsPath: stepfunctions.JsonPath.stringAt('$.Images'),
     });
 
     const parallelImages = new stepfunctions.Parallel(this, 'Analyse Image', {
@@ -154,6 +154,7 @@ export class AnalysisStack extends cdk.Stack {
         CelebrityFaces: stepfunctions.JsonPath.stringAt('$[2].CelebrityFaces'),
         UnrecognizedFaces: stepfunctions.JsonPath.stringAt('$[2].UnrecognizedFaces'),
       },
+      resultPath: '$.Analysis',
     });
     parallelImages.branch(detectLabels);
     parallelImages.branch(detectText);
@@ -169,7 +170,11 @@ export class AnalysisStack extends cdk.Stack {
             "Detail": {
               "Text": stepfunctions.JsonPath.stringAt('$$.Execution.Input.detail.Text'),
               "Author": stepfunctions.JsonPath.stringAt('$$.Execution.Input.detail.Author'),
-              "Analysis": stepfunctions.JsonPath.objectAt('$')
+              "Analysis": stepfunctions.JsonPath.objectAt('$'),
+              "Twitter": {
+                "TweetId": stepfunctions.JsonPath.stringAt('$$.Execution.Input.detail.Twitter.TweetId'),
+                "UserId": stepfunctions.JsonPath.stringAt('$$.Execution.Input.detail.Twitter.UserId'),
+              }
             },
             "DetailType": "MESSAGE_ANALYSED",
             "EventBusName": this._plumbingEventBus.eventBusName,

@@ -40,7 +40,6 @@ class ChatBot {
   }
 
   getFact = (): string => {
-    // From https://icanhazdadjoke.com/ - They have an API but I wanted something quick and reliable
     const jokes = [
       "The dot over the small letter 'i' is called a tittle.",
       "The plastic tips of shoelaces are called aglets.",

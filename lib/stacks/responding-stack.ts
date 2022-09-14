@@ -29,11 +29,18 @@ export class RespondingStack extends cdk.Stack {
 
     const lambda = this.createTextResponseResources();
 
-    const analyseIncomingMessageRule = new events.Rule(this, 'RespondAnalysedMessageRule', {
+    // Match on anything that has text which is more than the account username and which doesn't have images
+    // Images will be dealt with my a different lambda
+    const analyseIncomingMessageRule = new events.Rule(this, 'RespondTextRule', {
       eventPattern: {
         detailType: ['MESSAGE_ANALYSED'],
         detail: {
-          Text: [{ 'anything-but': ['', '@makitdev']}]
+          Text: [{ 'anything-but': ['', '@makitdev']}],
+          Analysis: {
+            Images: {
+              Key: [ { "exists": false  } ]
+            }
+          }
         }
       },
       eventBus: props.plumbingEventBus,
@@ -100,7 +107,7 @@ export class RespondingStack extends cdk.Stack {
             {
               message: {
                 plainTextMessage: {
-                  value: 'You can ask me for a joke, fact or send an image with faces in to get blurred.'
+                  value: 'You can ask me for a joke, fact or send an image and I will identify the celebrities'
                 }
               }
             }

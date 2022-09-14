@@ -45,6 +45,7 @@ export interface TwitterEntities {
 }
 
 export interface TwitterTweetCreated {
+  id: number,
   user: TwitterUser,
   entities: TwitterEntities,
   text: string,
@@ -232,6 +233,11 @@ class Twitter {
         Text: payload.truncated ? payload.extended_tweet.full_text : payload.text,
         ImageUrls: payload.entities?.media ? payload.entities.media.map(e => e.media_url_https) : undefined,
         Author: payload.user.screen_name,
+        Twitter: {
+          // Need these for replying
+          TweetId: payload.id,
+          UserId: payload.user.id,
+        }
       }),
       DetailType: `MESSAGE_RECEIVED`,
       EventBusName: this._eventBusName,

@@ -6,7 +6,14 @@ type MessageAnalysedDetailType = "MESSAGE_ANALYSED";
 interface MessageAnalysedDetail {
   Author: string,
   Text: string,
+  Twitter: TwitterDetail,
 }
+
+interface TwitterDetail {
+  UserId: number,
+  TweetId: number,
+}
+
 
 class ChatBot {
   private readonly _eventBusName: string;
@@ -52,7 +59,7 @@ class ChatBot {
     console.info('Response:', JSON.stringify(response, null, 2));
 
     if (response && response.messages && response.messages.length > 0 && response.messages[0].content) {
-      const respondEvent = this.generateEvent(`@${event.detail.Author} ${response.messages[0].content}`);
+      const respondEvent = this.generateEvent(`@${event.detail.Author} ${response.messages[0].content}`, event.detail.Twitter);
 
       console.info('Pushing to event bridge', JSON.stringify(respondEvent, null, 2));
 
@@ -66,10 +73,12 @@ class ChatBot {
     return true;
   };
 
-   generateEvent = (message: string): aws.EventBridge.PutEventsRequestEntry => {
+   generateEvent = (message: string, detail: TwitterDetail): aws.EventBridge.PutEventsRequestEntry => {
     return {
       Detail: JSON.stringify({
         Text: message,
+        ReplyToUserId: detail.UserId,
+        ReplyToTweetId: detail.TweetId,
       }),
       DetailType: `SEND_TWEET`,
       EventBusName: this._eventBusName,
