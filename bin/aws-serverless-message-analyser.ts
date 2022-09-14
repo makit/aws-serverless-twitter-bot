@@ -7,12 +7,13 @@ import { AnalysisStack } from '../lib/stacks/analysis-stack';
 import { AlertingStack } from '../lib/stacks/alerting-stack';
 import { AnalyticsStack } from '../lib/stacks/analytics-stack';
 import { RespondingStack } from '../lib/stacks/responding-stack';
+import { EgressStack } from '../lib/stacks/egress-stack';
 
 const app = new cdk.App();
 
 const plumbingStack = new PlumbingStack(app, 'PlumbingStack', {});
 
-new IngressStack(app, 'IngressStack', { plumbingEventBus: plumbingStack.eventBus, twitterIdOfAccount: 999 }); //TODO: Change 99 to be input
+new IngressStack(app, 'IngressStack', { plumbingEventBus: plumbingStack.eventBus, twitterIdOfAccount: 199850204 }); //TODO: Change 99 to be input
 
 new AnalysisStack(app, 'AnalysisStack', { plumbingEventBus: plumbingStack.eventBus });
 
@@ -21,3 +22,5 @@ new AlertingStack(app, 'AlertingStack', { plumbingEventBus: plumbingStack.eventB
 new AnalyticsStack(app, 'AnalyticsStack', { plumbingEventBus: plumbingStack.eventBus });
 
 new RespondingStack(app, 'RespondingStack', { plumbingEventBus: plumbingStack.eventBus });
+
+new EgressStack(app, 'EgressStack', { plumbingEventBus: plumbingStack.eventBus }); //TODO: Change 99 to be input

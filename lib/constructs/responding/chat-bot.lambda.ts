@@ -10,8 +10,8 @@ interface MessageAnalysedDetail {
 }
 
 interface TwitterDetail {
-  UserId: number,
-  TweetId: number,
+  UserId: string,
+  TweetId: string,
 }
 
 

@@ -3,7 +3,10 @@ import * as crypto from 'crypto';
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 
 export interface TwitterApiDetails {
-  ConsumerSecret: string,
+  ApiSecret: string,
+  ApiKey: string,
+  AccessToken: string,
+  AccessTokenSecret: string,
 }
 
 export interface TwitterActivityPayload {
@@ -27,7 +30,7 @@ export interface TwitterActivityPayload {
 }
 
 export interface TwitterUser {
-  id: number,
+  id_str: string,
   name: string,
   screen_name: string,
 }
@@ -45,7 +48,7 @@ export interface TwitterEntities {
 }
 
 export interface TwitterTweetCreated {
-  id: number,
+  id_str: string,
   user: TwitterUser,
   entities: TwitterEntities,
   text: string,
@@ -235,8 +238,8 @@ class Twitter {
         Author: payload.user.screen_name,
         Twitter: {
           // Need these for replying
-          TweetId: payload.id,
-          UserId: payload.user.id,
+          TweetId: payload.id_str,
+          UserId: payload.user.id_str,
         }
       }),
       DetailType: `MESSAGE_RECEIVED`,
@@ -246,7 +249,7 @@ class Twitter {
   }
 
   generateHmac = (payload: string): string => {
-    return crypto.createHmac('sha256', this._secret.ConsumerSecret).update(payload).digest('base64');
+    return crypto.createHmac('sha256', this._secret.ApiSecret).update(payload).digest('base64');
   }
 }
 
