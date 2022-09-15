@@ -21,7 +21,7 @@ export class EgressStack extends cdk.Stack {
     // The secret is manually added, see README for more details, but this is the AWS Recommended way to
     // ensure it is not stored in Git or shared around as environment variables/parameters.
     const twitterSecret = secretsmanager.Secret.fromSecretAttributes(this, 'TwitterSecret', {
-      secretPartialArn: `arn:aws:secretsmanager:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:secret:TwitterSecret`
+      secretPartialArn: `arn:aws:secretsmanager:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:secret:TwitterSecret`,
     });
 
     const tweetConstruct = new TweetConstruct(this, 'TweetConstruct', {

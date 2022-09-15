@@ -1,7 +1,7 @@
 import * as aws from 'aws-sdk';
 import { EventBridgeEvent } from 'aws-lambda';
 
-type MessageAnalysedDetailType = "MESSAGE_ANALYSED";
+type MessageAnalysedDetailType = 'MESSAGE_ANALYSED';
 
 interface MessageAnalysedDetail {
   Author: string,
@@ -17,10 +17,15 @@ interface TwitterDetail {
 
 class ChatBot {
   private readonly _eventBusName: string;
+
   private readonly _botId: string;
+
   private readonly _botAliasId: string;
+
   private readonly _botLocaleId: string;
+
   private readonly _lex: aws.LexRuntimeV2;
+
   private readonly _eventBridge: aws.EventBridge;
 
   constructor() {
@@ -67,24 +72,24 @@ class ChatBot {
         Entries: [respondEvent],
       }).promise();
 
-      console.log('Pushed to EventBridge', JSON.stringify(putResponse, null, 2))
+      console.log('Pushed to EventBridge', JSON.stringify(putResponse, null, 2));
     }
 
     return true;
   };
 
-   generateEvent = (message: string, detail: TwitterDetail): aws.EventBridge.PutEventsRequestEntry => {
+  generateEvent = (message: string, detail: TwitterDetail): aws.EventBridge.PutEventsRequestEntry => {
     return {
       Detail: JSON.stringify({
         Text: message,
         ReplyToUserId: detail.UserId,
         ReplyToTweetId: detail.TweetId,
       }),
-      DetailType: `SEND_TWEET`,
+      DetailType: 'SEND_TWEET',
       EventBusName: this._eventBusName,
       Source: 'BOT',
     };
-  }
+  };
 }
 
 // Initialise class outside of the handler so context is reused.

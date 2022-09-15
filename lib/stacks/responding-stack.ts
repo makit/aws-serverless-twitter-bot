@@ -21,6 +21,7 @@ export interface RespondingStackProps extends cdk.StackProps {
 export class RespondingStack extends cdk.Stack {
 
   private readonly localeId = 'en_GB';
+
   public readonly _eventBus: events.IEventBus;
 
   constructor(scope: Construct, id: string, props: RespondingStackProps) {
@@ -36,13 +37,13 @@ export class RespondingStack extends cdk.Stack {
       eventPattern: {
         detailType: ['MESSAGE_ANALYSED'],
         detail: {
-          Text: [{ 'anything-but': ['', '@makitdev']}],
+          Text: [{ 'anything-but': ['', '@makitdev'] }],
           Analysis: {
             Images: {
-              Key: [ { "exists": false  } ]
-            }
-          }
-        }
+              Key: [ { 'exists': false  } ],
+            },
+          },
+        },
       },
       eventBus: props.plumbingEventBus,
     });
@@ -52,7 +53,7 @@ export class RespondingStack extends cdk.Stack {
     const processImages = new ProcessImagesConstruct(this, 'ProcessImages', {
       plumbingEventBus: props.plumbingEventBus,
       bucket: props.analysisBucket,
-    })
+    });
 
     // Match on anything that has at least one image
     const analyseImageRule = new events.Rule(this, 'RespondImageRule', {
@@ -61,10 +62,10 @@ export class RespondingStack extends cdk.Stack {
         detail: {
           Analysis: {
             Images: {
-              Key: [ { "exists": true  } ]
-            }
-          }
-        }
+              Key: [ { 'exists': true  } ],
+            },
+          },
+        },
       },
       eventBus: props.plumbingEventBus,
     });
@@ -100,7 +101,7 @@ export class RespondingStack extends cdk.Stack {
       ],
       fulfillmentCodeHook: {
         enabled: true,
-      }
+      },
     };
 
     const factIntent: lex.CfnBot.IntentProperty = {
@@ -121,7 +122,7 @@ export class RespondingStack extends cdk.Stack {
       ],
       fulfillmentCodeHook: {
         enabled: true,
-      }
+      },
     };
 
     const fallbackIntent: lex.CfnBot.IntentProperty = {
@@ -134,13 +135,13 @@ export class RespondingStack extends cdk.Stack {
             {
               message: {
                 plainTextMessage: {
-                  value: 'You can ask me for a joke, fact or send an image and I will identify the celebrities'
-                }
-              }
-            }
-          ]
-        }
-      }
+                  value: 'You can ask me for a joke, fact or send an image and I will identify the celebrities',
+                },
+              },
+            },
+          ],
+        },
+      },
     };
 
     const bot = new lex.CfnBot(this, 'RespondBot', {
@@ -156,18 +157,18 @@ export class RespondingStack extends cdk.Stack {
           localeId: this.localeId,
           nluConfidenceThreshold: 0.4,
           intents: [jokeIntent, factIntent, fallbackIntent],
-        }
-      ]
+        },
+      ],
     });
 
     const botVersion = new lex.CfnBotVersion(this, 'RespondBotVers', {
       botId: bot.ref,
       botVersionLocaleSpecification: [{
-          botVersionLocaleDetails: {
-            sourceBotVersion: 'DRAFT',
-          },
-          localeId: this.localeId,
+        botVersionLocaleDetails: {
+          sourceBotVersion: 'DRAFT',
         },
+        localeId: this.localeId,
+      },
       ],
     });
 
@@ -184,11 +185,11 @@ export class RespondingStack extends cdk.Stack {
               lambdaCodeHook: {
                 codeHookInterfaceVersion: '1.0',
                 lambdaArn: chatBotFulfilmentConstruct.lambda.functionArn,
-              }
-            }
-          }
-        }
-      ]
+              },
+            },
+          },
+        },
+      ],
     });
 
     const chatBotConstruct = new ChatBotConstruct(this, 'ChatBot', {

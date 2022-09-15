@@ -4,7 +4,7 @@ class TransformRecords {
   handler = async (event: firehose.FirehoseTransformationEvent): Promise<firehose.FirehoseTransformationResult> => {
     console.info('Received Event:', JSON.stringify(event, null, 2));
 
-    let records: firehose.FirehoseTransformationResultRecord[] = [];
+    const records: firehose.FirehoseTransformationResultRecord[] = [];
 
     for (const record of event.records) {
       const transformed = this.transformRecord(record);

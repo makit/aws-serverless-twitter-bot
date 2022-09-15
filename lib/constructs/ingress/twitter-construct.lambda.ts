@@ -40,7 +40,7 @@ export interface TwitterExtendedTweet {
 }
 
 export interface TwitterMedia {
-  media_url_https: String
+  media_url_https: string
 }
 
 export interface TwitterEntities {
@@ -62,9 +62,13 @@ interface Dictionary<T> {
 
 class Twitter {
   private readonly _secretArn: string;
+
   private readonly _eventBusName: string;
+
   private readonly _twitterIdOfAccount: number;
+
   private readonly _eventBridge: aws.EventBridge;
+
   private readonly _secretsManager: aws.SecretsManager;
   
   // We will lazy load the secret for efficiency across reused instances
@@ -95,11 +99,11 @@ class Twitter {
         this._secret = JSON.parse(secretValue.SecretString ?? '');
       }
   
-      if (event.requestContext.httpMethod === "GET") {
+      if (event.requestContext.httpMethod === 'GET') {
         return await this.handleCrc(event);
       }
   
-      if (event.requestContext.httpMethod === "POST") {
+      if (event.requestContext.httpMethod === 'POST') {
         return await this.handleActivity(event);
       }
   
@@ -126,7 +130,7 @@ class Twitter {
       };
     }
 
-    var bodyResponse = JSON.stringify({
+    const bodyResponse = JSON.stringify({
       response_token: `sha256=${this.generateHmac(givenCrcToken)}`,
     });
 
@@ -136,7 +140,7 @@ class Twitter {
       body: bodyResponse,
       statusCode: 200,
     };
-  }
+  };
 
   handleActivity = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
 
@@ -167,13 +171,13 @@ class Twitter {
       Entries: this.generateEvents(payload),
     }).promise();
 
-    console.log('Pushed to EventBridge', JSON.stringify(putResponse, null, 2))
+    console.log('Pushed to EventBridge', JSON.stringify(putResponse, null, 2));
 
     return {
       body: 'Accepted',
       statusCode: 200,
     };
-  }
+  };
 
   generateEvents = (payload: TwitterActivityPayload): aws.EventBridge.PutEventsRequestEntryList => {
     const events: aws.EventBridge.PutEventsRequestEntryList = [];
@@ -192,13 +196,13 @@ class Twitter {
       'direct_message_indicate_typing_events': 'DM_TYPING',
       'direct_message_mark_read_events': 'DM_MARKED_READ',
       'tweet_delete_events': 'DELETED',
-    }
+    };
 
     for (const type in types) {
       const eventsOfType = (payload as any)[type];
       if (eventsOfType) {
         const typeName: string = types[type];
-        (payload as any)[type].forEach((e: any) => events.push(this.generateSingleEvent(typeName, e)))
+        (payload as any)[type].forEach((e: any) => events.push(this.generateSingleEvent(typeName, e)));
       }
     }
 
@@ -207,13 +211,13 @@ class Twitter {
       payload.tweet_create_events.forEach((e) => {
         // If it wasn't sent by the twitter account we are receiving events for
         if (e.user.id !== this._twitterIdOfAccount) {
-          events.push(this.generateMessageReceivedEvent(e)) 
+          events.push(this.generateMessageReceivedEvent(e)); 
         }
       });
     }
     
     return events;
-  }
+  };
 
   generateSingleEvent = (type: string, detail: any): aws.EventBridge.PutEventsRequestEntry => {
     return {
@@ -222,7 +226,7 @@ class Twitter {
       EventBusName: this._eventBusName,
       Source: 'TWITTER',
     };
-  }
+  };
 
   /**
    * Generate an internal payload for all received messages, this is an Anti-corruption Layer Event so that downstream
@@ -240,17 +244,17 @@ class Twitter {
           // Need these for replying
           TweetId: payload.id_str,
           UserId: payload.user.id_str,
-        }
+        },
       }),
-      DetailType: `MESSAGE_RECEIVED`,
+      DetailType: 'MESSAGE_RECEIVED',
       EventBusName: this._eventBusName,
       Source: 'TWITTER',
     };
-  }
+  };
 
   generateHmac = (payload: string): string => {
     return crypto.createHmac('sha256', this._secret.ApiSecret).update(payload).digest('base64');
-  }
+  };
 }
 
 // Initialise class outside of the handler so context is reused.

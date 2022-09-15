@@ -15,7 +15,7 @@ export class PlumbingStack extends cdk.Stack {
     super(scope, id, props);
 
     this.eventBus = new events.EventBus(this, 'bus', {
-      eventBusName: 'Plumbing'
+      eventBusName: 'Plumbing',
     });
 
     this.addEventArchiveForReplayAbility();

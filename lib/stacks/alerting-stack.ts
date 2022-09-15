@@ -21,9 +21,9 @@ export class AlertingStack extends cdk.Stack {
     this._eventBus = props.plumbingEventBus;
 
     // People can subscribe phone numbers and emails to this to get alerts
-    var alertTopic = new sns.Topic(this, 'MessageAlert');
+    const alertTopic = new sns.Topic(this, 'MessageAlert');
 
-    this.createNegativeMessagesRule(alertTopic,);
+    this.createNegativeMessagesRule(alertTopic);
   }
 
   /**
@@ -36,9 +36,9 @@ export class AlertingStack extends cdk.Stack {
         detailType: ['MESSAGE_ANALYSED'],
         detail: {
           Analysis: {
-            TextSentiment: ['NEGATIVE']
-          }
-        }
+            TextSentiment: ['NEGATIVE'],
+          },
+        },
       },
       eventBus: this._eventBus,
     });

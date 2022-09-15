@@ -26,7 +26,7 @@ export default class TweetConstruct extends Construct {
     const role = new iam.Role(this, 'LambdaRole', {
       assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
     });
-    role.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSLambdaBasicExecutionRole"));
+    role.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole'));
     role.addToPolicy(
       new iam.PolicyStatement({
         resources: [`${props.twitterSecret.secretArn}-*`],

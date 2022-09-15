@@ -36,7 +36,7 @@ export class AnalyticsStack extends cdk.Stack {
       retries: 1,
     });
 
-    var kinesis = new firehose_alpha.DeliveryStream(this, 'DeliveryStream', {
+    const kinesis = new firehose_alpha.DeliveryStream(this, 'DeliveryStream', {
       destinations: [new firehosedestinations.S3Bucket(dataLakeBucket, { 
         bufferingInterval: cdk.Duration.seconds(60),
         processor,
@@ -53,8 +53,8 @@ export class AnalyticsStack extends cdk.Stack {
     dataLakeRule.addTarget(new targets.KinesisFirehoseStream(kinesis.node.defaultChild as firehose.CfnDeliveryStream, {
     }));
 
-    const database = new glue.Database(this, "MessagesDataLake", {
-      databaseName: "messages-data-lake",
+    const database = new glue.Database(this, 'MessagesDataLake', {
+      databaseName: 'messages-data-lake',
     });
  
     this.createGlueTableForAnalysedMessage(database, dataLakeBucket);
@@ -68,87 +68,87 @@ export class AnalyticsStack extends cdk.Stack {
    * @param dataLakeBucket The Bucket containing the data, to create the table for.
    */
   private createGlueTableForAnalysedMessage(database: glue.Database, dataLakeBucket: cdk.aws_s3.Bucket) {
-    new glue.Table(this, "AnalysedMessagesTable", {
+    new glue.Table(this, 'AnalysedMessagesTable', {
       database,
       storedAsSubDirectories: true, // Kinesis stores the data in sub-directories
-      tableName: "analysed-messages-table",
+      tableName: 'analysed-messages-table',
       bucket: dataLakeBucket,
       columns: [
         {
-          name: "detail-type",
+          name: 'detail-type',
           type: glue.Schema.STRING,
         },
         {
-          name: "source",
+          name: 'source',
           type: glue.Schema.STRING,
         },
         {
-          name: "time",
+          name: 'time',
           type: glue.Schema.TIMESTAMP,
         },
         {
-          name: "detail",
+          name: 'detail',
           type: glue.Schema.struct([
             {
-              name: "Author",
+              name: 'Author',
               type: glue.Schema.STRING,
             },
             {
-              name: "Text",
+              name: 'Text',
               type: glue.Schema.STRING,
             },
             {
-              name: "Analysis",
+              name: 'Analysis',
               type: glue.Schema.struct([
                 {
-                  name: "TextSentiment",
+                  name: 'TextSentiment',
                   type: glue.Schema.STRING,
                 },
                 {
-                  name: "Images",
+                  name: 'Images',
                   type: glue.Schema.array(glue.Schema.struct([
                     {
-                      name: "Analysis",
+                      name: 'Analysis',
                       type: glue.Schema.struct([
                         {
-                          name: "CelebrityFaces",
+                          name: 'CelebrityFaces',
                           type: glue.Schema.array(glue.Schema.struct([
                             {
-                              name: "Name",
+                              name: 'Name',
                               type: glue.Schema.STRING,
                             },
                             {
-                              name: "Face",
+                              name: 'Face',
                               type: glue.Schema.struct([
                                 {
-                                  name: "Emotions",
+                                  name: 'Emotions',
                                   type: glue.Schema.array(glue.Schema.struct([
                                     {
-                                      name: "Confidence",
+                                      name: 'Confidence',
                                       type: glue.Schema.DOUBLE,
                                     },
                                     {
-                                      name: "Type",
+                                      name: 'Type',
                                       type: glue.Schema.STRING,
                                     },
                                   ])),
                                 },
-                              ])
-                            }
+                              ]),
+                            },
                           ])),
                         },
                         {
-                          name: "UnrecognizedFaces",
+                          name: 'UnrecognizedFaces',
                           type: glue.Schema.array(glue.Schema.struct([
                             {
-                              name: "Emotions",
+                              name: 'Emotions',
                               type: glue.Schema.array(glue.Schema.struct([
                                 {
-                                  name: "Confidence",
+                                  name: 'Confidence',
                                   type: glue.Schema.DOUBLE,
                                 },
                                 {
-                                  name: "Type",
+                                  name: 'Type',
                                   type: glue.Schema.STRING,
                                 },
                               ])),
@@ -156,20 +156,20 @@ export class AnalyticsStack extends cdk.Stack {
                           ])),
                         },
                         {
-                          name: "Labels",
+                          name: 'Labels',
                           type: glue.Schema.array(glue.Schema.struct([
                             {
-                              name: "Confidence",
+                              name: 'Confidence',
                               type: glue.Schema.DOUBLE,
                             },
                             {
-                              name: "Name",
+                              name: 'Name',
                               type: glue.Schema.STRING,
                             },
                           ])),
                         },
-                      ])
-                    }
+                      ]),
+                    },
                   ])),
                 },
               ]),

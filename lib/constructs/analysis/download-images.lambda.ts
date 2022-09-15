@@ -12,12 +12,13 @@ interface DownloadImagesResponse {
   Images: DownloadImagesImage[]
 }
 
-interface DownloadImagesImage{
+interface DownloadImagesImage {
   Key: string
 }
 
 class DownloadImages {
   private readonly _bucket: string;
+
   private readonly _s3: aws.S3;
 
   constructor() {
@@ -36,7 +37,7 @@ class DownloadImages {
   handler = async (event: DownloadImagesEvent): Promise<DownloadImagesResponse> => {
     console.info('Received Event:', JSON.stringify(event, null, 2));
 
-    var promises = event.imageUrls.map(e => this.handleSingleImage(e));
+    const promises = event.imageUrls.map(e => this.handleSingleImage(e));
     
     console.info('Waiting for all promises to complete');
     const results = await Promise.allSettled(promises);
@@ -44,8 +45,8 @@ class DownloadImages {
 
     const fulfilledResults = (results.filter(c=>c.status === 'fulfilled') as PromiseFulfilledResult<string>[]);
     return {
-      Images: fulfilledResults.map(k => { return { Key: k.value } }),
-    }
+      Images: fulfilledResults.map(k => { return { Key: k.value }; }),
+    };
   };
 
   handleSingleImage = async (url: string): Promise<string> => {
@@ -67,7 +68,7 @@ class DownloadImages {
     console.info('Image put into bucket', url, key, result);
 
     return key;
-  }
+  };
 }
 
 // Initialise class outside of the handler so context is reused.

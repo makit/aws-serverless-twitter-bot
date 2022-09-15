@@ -2,7 +2,7 @@ import * as aws from 'aws-sdk';
 import { EventBridgeEvent } from 'aws-lambda';
 import gm from 'gm';
 
-type MessageAnalysedDetailType = "MESSAGE_ANALYSED";
+type MessageAnalysedDetailType = 'MESSAGE_ANALYSED';
 
 interface MessageAnalysedDetail {
   Author: string,
@@ -52,8 +52,11 @@ interface BoundingBox {
 
 class ProcessImages {
   private readonly _eventBusName: string;
+
   private readonly _bucket: string;
+
   private readonly _s3: aws.S3;
+
   private readonly _eventBridge: aws.EventBridge;
 
   constructor() {
@@ -96,7 +99,7 @@ class ProcessImages {
     console.log('Overwritten image', response);
 
     const celebList = imageToAnalyse.Analysis.CelebrityFaces.map(f => f.Name);
-    const celebs = celebList.length > 0 ? `I recognised: ${celebList.join(",")}` : 'Sorry I recognised no celebrities!';
+    const celebs = celebList.length > 0 ? `I recognised: ${celebList.join(',')}` : 'Sorry I recognised no celebrities!';
 
     if (response) {
       const respondEvent = this.generateEvent(`@${event.detail.Author} ${celebs}`, event.detail.Twitter, imageToAnalyse.Key);
@@ -107,7 +110,7 @@ class ProcessImages {
         Entries: [respondEvent],
       }).promise();
 
-      console.log('Pushed to EventBridge', JSON.stringify(putResponse, null, 2))
+      console.log('Pushed to EventBridge', JSON.stringify(putResponse, null, 2));
     }
 
     return true;
@@ -121,24 +124,24 @@ class ProcessImages {
       Key: imageSpec.Key,
     }).promise();
 
-    return await new Promise( function(resolve, reject) {
+    return new Promise( function (resolve, reject) {
       try {
 
-        let img = gm(response.Body);
+        const img = gm(response.Body);
 
-        img.size(function(err: any, value: any){
+        img.size(function (err: any, value: any) {
           if (err) {
             reject(err);
           } else {
             console.info('Processing celebrity faces', imageSpec.Key);
-            for(const celebFace of imageSpec.Analysis.CelebrityFaces) {
+            for (const celebFace of imageSpec.Analysis.CelebrityFaces) {
 
-              const x = (celebFace.Face.BoundingBox.Left * value.width)+((celebFace.Face.BoundingBox.Width * value.width)/2);
-              const y = celebFace.Face.BoundingBox.Top* value.height;
+              const x = (celebFace.Face.BoundingBox.Left * value.width) + ((celebFace.Face.BoundingBox.Width * value.width) / 2);
+              const y = celebFace.Face.BoundingBox.Top * value.height;
 
               console.log('Drawing text', x, y);
 
-              img.stroke("red", 1).fontSize(18).drawText(x, y, celebFace.Name);
+              img.stroke('red', 1).fontSize(18).drawText(x, y, celebFace.Name);
             }
 
             // One option is to blur the unknowns
@@ -151,8 +154,8 @@ class ProcessImages {
             //     unknownFace.BoundingBox.Top * value.height).blur(20);
             // }
   
-            img.toBuffer('JPG', function(err: any, buffer: any) {
-              if(err) {
+            img.toBuffer('JPG', function (err: any, buffer: any) {
+              if (err) {
                 reject(err);
               } else {
                 resolve(buffer);
@@ -165,7 +168,7 @@ class ProcessImages {
         reject(error);
       }
     });
-  }
+  };
 
   generateEvent = (message: string, detail: TwitterDetail, imageKey: string): aws.EventBridge.PutEventsRequestEntry => {
     return {
@@ -175,11 +178,11 @@ class ProcessImages {
         ReplyToTweetId: detail.TweetId,
         ImageKey: imageKey,
       }),
-      DetailType: `SEND_TWEET`,
+      DetailType: 'SEND_TWEET',
       EventBusName: this._eventBusName,
       Source: 'BOT',
     };
-  }
+  };
 }
 
 // Initialise class outside of the handler so context is reused.

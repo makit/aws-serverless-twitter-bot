@@ -19,7 +19,9 @@ export interface AnalysisStackProps extends cdk.StackProps {
 export class AnalysisStack extends cdk.Stack {
 
   public readonly analyseBucket: s3.Bucket;
+
   private readonly _downloadImagesConstruct: DownloadImagesConstruct;
+
   private readonly _plumbingEventBus: events.IEventBus;
 
   constructor(scope: Construct, id: string, props: AnalysisStackProps) {
@@ -33,18 +35,18 @@ export class AnalysisStack extends cdk.Stack {
       autoDeleteObjects: true,
       lifecycleRules: [{
         expiration: cdk.Duration.days(1),        
-      }]
-    })
+      }],
+    });
 
     this._downloadImagesConstruct = new DownloadImagesConstruct(this, 'Download Images', {
       bucket: this.analyseBucket,
-    })
+    });
 
     const analyseMessageStateMachine = this.buildStepFunction();
 
     const analyseIncomingMessageRule = new events.Rule(this, 'AnalyseIncomingMessageRule', {
       eventPattern: {
-        detailType: ["MESSAGE_RECEIVED"],
+        detailType: ['MESSAGE_RECEIVED'],
       },
       eventBus: props.plumbingEventBus,
     });
@@ -56,24 +58,24 @@ export class AnalysisStack extends cdk.Stack {
    * @returns The build State Machine.
    */
   private buildStepFunction(): stepfunctions.StateMachine {
-    const detectEntities = new tasks.CallAwsService(this, "Detect Entities", {
-      service: "comprehend",
-      action: "detectEntities",
-      iamResources: ["*"],
+    const detectEntities = new tasks.CallAwsService(this, 'Detect Entities', {
+      service: 'comprehend',
+      action: 'detectEntities',
+      iamResources: ['*'],
       parameters: {
-        "Text": stepfunctions.JsonPath.stringAt("$.Text"), 
-        "LanguageCode": "en",
-      }
+        'Text': stepfunctions.JsonPath.stringAt('$.Text'), 
+        'LanguageCode': 'en',
+      },
     });
 
-    const detectSentiment = new tasks.CallAwsService(this, "Detect Sentiment", {
-      service: "comprehend",
-      action: "detectSentiment",
-      iamResources: ["*"],
+    const detectSentiment = new tasks.CallAwsService(this, 'Detect Sentiment', {
+      service: 'comprehend',
+      action: 'detectSentiment',
+      iamResources: ['*'],
       parameters: {
-        "Text": stepfunctions.JsonPath.stringAt("$.Text"), 
-        "LanguageCode": "en",
-      }
+        'Text': stepfunctions.JsonPath.stringAt('$.Text'), 
+        'LanguageCode': 'en',
+      },
     });
 
     const analyseText = new stepfunctions.Parallel(this, 'Analyse Text', {
@@ -82,8 +84,8 @@ export class AnalysisStack extends cdk.Stack {
         Sentiment: stepfunctions.JsonPath.stringAt('$[1].Sentiment'),
       },
     });
-    analyseText.branch(detectEntities)
-    analyseText.branch(detectSentiment)
+    analyseText.branch(detectEntities);
+    analyseText.branch(detectSentiment);
 
     const containImage = new stepfunctions.Choice(this, 'Contain Image(s)?');
     const containsImageCondition = stepfunctions.Condition.isPresent('$.ImageUrls');
@@ -99,52 +101,52 @@ export class AnalysisStack extends cdk.Stack {
       outputPath: '$.Payload',
     });
 
-    const detectLabels = new tasks.CallAwsService(this, "Detect Labels", {
-      service: "rekognition",
-      action: "detectLabels",
-      iamResources: ["*"],
+    const detectLabels = new tasks.CallAwsService(this, 'Detect Labels', {
+      service: 'rekognition',
+      action: 'detectLabels',
+      iamResources: ['*'],
       parameters: {
-        "Image": {
-          "S3Object": {
-            "Bucket": this.analyseBucket.bucketName,
-            "Name": stepfunctions.JsonPath.stringAt("$.Key")
-          }
-        }
+        'Image': {
+          'S3Object': {
+            'Bucket': this.analyseBucket.bucketName,
+            'Name': stepfunctions.JsonPath.stringAt('$.Key'),
+          },
+        },
       },
       resultSelector: {
         Labels: stepfunctions.JsonPath.stringAt('$.Labels'),
       },
     });
 
-    const detectText = new tasks.CallAwsService(this, "Detect Text", {
-      service: "rekognition",
-      action: "detectText",
-      iamResources: ["*"],
+    const detectText = new tasks.CallAwsService(this, 'Detect Text', {
+      service: 'rekognition',
+      action: 'detectText',
+      iamResources: ['*'],
       parameters: {
-        "Image": {
-          "S3Object": {
-            "Bucket": this.analyseBucket.bucketName,
-            "Name": stepfunctions.JsonPath.stringAt("$.Key")
-          }
-        }
+        'Image': {
+          'S3Object': {
+            'Bucket': this.analyseBucket.bucketName,
+            'Name': stepfunctions.JsonPath.stringAt('$.Key'),
+          },
+        },
       },
       resultSelector: {
         TextDetections: stepfunctions.JsonPath.stringAt('$.TextDetections'),
       },
     });
 
-    const recognizeCelebrities = new tasks.CallAwsService(this, "Recognize Celebrities", {
-      service: "rekognition",
-      action: "recognizeCelebrities",
-      iamResources: ["*"],
+    const recognizeCelebrities = new tasks.CallAwsService(this, 'Recognize Celebrities', {
+      service: 'rekognition',
+      action: 'recognizeCelebrities',
+      iamResources: ['*'],
       parameters: {
-        "Image": {
-          "S3Object": {
-            "Bucket": this.analyseBucket.bucketName,
-            "Name": stepfunctions.JsonPath.stringAt("$.Key")
-          }
-        }
-      }
+        'Image': {
+          'S3Object': {
+            'Bucket': this.analyseBucket.bucketName,
+            'Name': stepfunctions.JsonPath.stringAt('$.Key'),
+          },
+        },
+      },
     });
 
     const mapImage = new stepfunctions.Map(this, 'Map through Images', {
@@ -165,27 +167,27 @@ export class AnalysisStack extends cdk.Stack {
     parallelImages.branch(recognizeCelebrities);
 
     const pushResultingEvent = new tasks.CallAwsService(this, 'Push Result', {
-      service: "eventbridge",
-      action: "putEvents",
-      iamResources: ["*"],
+      service: 'eventbridge',
+      action: 'putEvents',
+      iamResources: ['*'],
       parameters: {
-        "Entries": [
+        'Entries': [
           {
-            "Detail": {
-              "Text": stepfunctions.JsonPath.stringAt('$$.Execution.Input.detail.Text'),
-              "Author": stepfunctions.JsonPath.stringAt('$$.Execution.Input.detail.Author'),
-              "Analysis": stepfunctions.JsonPath.objectAt('$'),
-              "Twitter": {
-                "TweetId": stepfunctions.JsonPath.stringAt('$$.Execution.Input.detail.Twitter.TweetId'),
-                "UserId": stepfunctions.JsonPath.stringAt('$$.Execution.Input.detail.Twitter.UserId'),
-              }
+            'Detail': {
+              'Text': stepfunctions.JsonPath.stringAt('$$.Execution.Input.detail.Text'),
+              'Author': stepfunctions.JsonPath.stringAt('$$.Execution.Input.detail.Author'),
+              'Analysis': stepfunctions.JsonPath.objectAt('$'),
+              'Twitter': {
+                'TweetId': stepfunctions.JsonPath.stringAt('$$.Execution.Input.detail.Twitter.TweetId'),
+                'UserId': stepfunctions.JsonPath.stringAt('$$.Execution.Input.detail.Twitter.UserId'),
+              },
             },
-            "DetailType": "MESSAGE_ANALYSED",
-            "EventBusName": this._plumbingEventBus.eventBusName,
-            "Source": stepfunctions.JsonPath.stringAt('$$.Execution.Input.source')
-          }
-        ]
-      }
+            'DetailType': 'MESSAGE_ANALYSED',
+            'EventBusName': this._plumbingEventBus.eventBusName,
+            'Source': stepfunctions.JsonPath.stringAt('$$.Execution.Input.source'),
+          },
+        ],
+      },
     });
 
     const pushFailEvent = new stepfunctions.Pass(this, 'Push Fail Result');
@@ -198,12 +200,12 @@ export class AnalysisStack extends cdk.Stack {
         Images: stepfunctions.JsonPath.stringAt('$[1]'),
       },
     });
-    parallelTextAndImages.branch(analyseText)
+    parallelTextAndImages.branch(analyseText);
     parallelTextAndImages.branch(containImage
       .when(containsImageCondition, downloadImagesToS3
         .next(mapImage
           .iterator(parallelImages)))
-      .otherwise(noImage))
+      .otherwise(noImage));
 
     const definition = parallelTextAndImages
       .addCatch(pushFailEvent)

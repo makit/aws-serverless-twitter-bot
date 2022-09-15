@@ -2,7 +2,7 @@ import * as aws from 'aws-sdk';
 import { TwitterClient } from 'twitter-api-client';
 import { EventBridgeEvent } from 'aws-lambda';
 
-type MessageAnalysedDetailType = "SEND_TWEET";
+type MessageAnalysedDetailType = 'SEND_TWEET';
 
 export interface TwitterApiDetails {
   ApiSecret: string,
@@ -20,8 +20,11 @@ interface MessageAnalysedDetail {
 
 class Tweet {
   private readonly _secretArn: string;
+
   private readonly _bucket: string;
+
   private readonly _secretsManager: aws.SecretsManager;
+
   private readonly _s3: aws.S3;
   
   // We will lazy load the client for efficiency across reused instances
@@ -81,12 +84,12 @@ class Tweet {
         text: event.detail.Text,
         media: mediaId === undefined ? undefined : {
           media_ids: [mediaId],
-        }
+        },
       });
   
       console.info('Tweet Response:', JSON.stringify(response, null, 2));
     } catch (error) {
-      console.error(JSON.stringify(error, null, 2))
+      console.error(JSON.stringify(error, null, 2));
       throw error;
     }
 

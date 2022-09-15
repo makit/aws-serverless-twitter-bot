@@ -24,8 +24,8 @@ export default class ChatBotConstruct extends Construct {
     const role = new iam.Role(this, 'LambdaRole', {
       assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
     });
-    role.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSLambdaBasicExecutionRole"));
-    role.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName("AmazonLexFullAccess"));
+    role.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole'));
+    role.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonLexFullAccess'));
     role.addToPolicy(
       new iam.PolicyStatement({
         resources: [props.plumbingEventBus.eventBusArn],
