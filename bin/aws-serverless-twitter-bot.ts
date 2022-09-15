@@ -11,9 +11,16 @@ import { EgressStack } from '../lib/stacks/egress-stack';
 
 const app = new cdk.App();
 
+// Read from context
+const twitterIdOfAccount = app.node.tryGetContext('twitterAccountId');
+
+if (!twitterIdOfAccount) {
+  throw new Error('Missing twitterAccountId context param');
+}
+
 const plumbingStack = new PlumbingStack(app, 'PlumbingStack', {});
 
-new IngressStack(app, 'IngressStack', { plumbingEventBus: plumbingStack.eventBus, twitterIdOfAccount: 199850204 }); //TODO: Change 99 to be input
+new IngressStack(app, 'IngressStack', { plumbingEventBus: plumbingStack.eventBus, twitterIdOfAccount });
 
 const analysisStack = new AnalysisStack(app, 'AnalysisStack', { plumbingEventBus: plumbingStack.eventBus });
 

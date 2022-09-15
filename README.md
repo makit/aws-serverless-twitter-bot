@@ -29,7 +29,7 @@ If not already setup for CDK then you will need:
 
 Within the root of this application you should be able to then run a `npm install` to restore the dependencies.
 
-Once installed, then you can run `cdk deploy --all` to build and deploy all stacks to your default AWS account/region. For other CDK commands then check [documention](https://docs.aws.amazon.com/cdk/v2/guide/cli.html).
+Once installed, then you can run `cdk deploy --all --context twitterAccountId=999999` to build and deploy all stacks to your default AWS account/region. **Fill in your own account ID here**. For other CDK commands then check [documention](https://docs.aws.amazon.com/cdk/v2/guide/cli.html).
 
 The API Gateway URL should be output to the console as part of the deployment, but may be hard to find in the output - it will look something like:
 `IngressStack.APIGateway = https://99dd9d9dd.execute-api.eu-west-1.amazonaws.com/prod/`
