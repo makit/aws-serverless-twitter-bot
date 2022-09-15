@@ -102,7 +102,10 @@ class ProcessImages {
     const celebs = celebList.length > 0 ? `I recognised: ${celebList.join(',')}` : 'Sorry I recognised no celebrities!';
 
     if (response) {
-      const respondEvent = this.generateEvent(`@${event.detail.Author} ${celebs}`, event.detail.Twitter, imageToAnalyse.Key);
+      const respondEvent = this.generateEvent(
+        `@${event.detail.Author} ${celebs}`, 
+        event.detail.Twitter, 
+        celebList.length > 0 ? imageToAnalyse.Key : undefined);
 
       console.info('Pushing to event bridge', JSON.stringify(respondEvent, null, 2));
 
@@ -174,7 +177,7 @@ class ProcessImages {
     });
   };
 
-  generateEvent = (message: string, detail: TwitterDetail, imageKey: string): aws.EventBridge.PutEventsRequestEntry => {
+  generateEvent = (message: string, detail: TwitterDetail, imageKey?: string): aws.EventBridge.PutEventsRequestEntry => {
     return {
       Detail: JSON.stringify({
         Text: message,

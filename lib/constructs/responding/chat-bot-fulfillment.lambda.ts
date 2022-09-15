@@ -35,7 +35,7 @@ class ChatBot {
         timeout: 700,
       });
       console.info('Received dad joke: ', response.data);
-      return response.data.joke;
+      return `${response.data.joke} #joke`;
     } catch (err) {
       console.error('Error getting joke: ', err);
 
