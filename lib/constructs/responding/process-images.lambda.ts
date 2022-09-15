@@ -28,8 +28,8 @@ interface TwitterImage {
 interface TwitterImageAnalysis {
   CelebrityFaces: TwitterFaceDetection[],
   UnrecognizedFaces: TwitterFace[],
-  Labels: any[],
-  TextDetections: any[]
+  Labels: never[],
+  TextDetections: never[]
 }
 
 interface TwitterFaceDetection {
@@ -116,7 +116,7 @@ class ProcessImages {
     return true;
   };
 
-  processImage = async (imageSpec: TwitterImage) : Promise<any> => {
+  processImage = async (imageSpec: TwitterImage) : Promise<Buffer> => {
     console.info('Downloading', imageSpec.Key);
     
     const response = await this._s3.getObject({
@@ -124,12 +124,16 @@ class ProcessImages {
       Key: imageSpec.Key,
     }).promise();
 
+    if (!response.Body) {
+      throw new Error('Cannot find image');
+    }
+
     return new Promise( function (resolve, reject) {
       try {
 
-        const img = gm(response.Body);
+        const img = gm(response.Body as Buffer);
 
-        img.size(function (err: any, value: any) {
+        img.size(function (err: Error | null, value: gm.Dimensions) {
           if (err) {
             reject(err);
           } else {
@@ -154,9 +158,9 @@ class ProcessImages {
             //     unknownFace.BoundingBox.Top * value.height).blur(20);
             // }
   
-            img.toBuffer('JPG', function (err: any, buffer: any) {
-              if (err) {
-                reject(err);
+            img.toBuffer('JPG', function (error: Error | null, buffer: Buffer) {
+              if (error) {
+                reject(error);
               } else {
                 resolve(buffer);
               }

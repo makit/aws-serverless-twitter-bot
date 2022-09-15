@@ -15,18 +15,18 @@ export interface TwitterActivityPayload {
   source: string,
   target: string,
   tweet_create_events: TwitterTweetCreated[],
-  favorite_events: any[],
-  follow_events: any[],
-  unfollow_events: any[],
-  block_events: any[],
-  unblock_events: any[],
-  mute_events: any[],
-  unmute_events: any[],
-  user_event: any[],
-  direct_message_events: any[],
-  direct_message_indicate_typing_events: any[],
-  direct_message_mark_read_events: any[],
-  tweet_delete_events: any[],
+  favorite_events: never[],
+  follow_events: never[],
+  unfollow_events: never[],
+  block_events: never[],
+  unblock_events: never[],
+  mute_events: never[],
+  unmute_events: never[],
+  user_event: never[],
+  direct_message_events: never[],
+  direct_message_indicate_typing_events: never[],
+  direct_message_mark_read_events: never[],
+  tweet_delete_events: never[],
 }
 
 export interface TwitterUser {
@@ -65,7 +65,7 @@ class Twitter {
 
   private readonly _eventBusName: string;
 
-  private readonly _twitterIdOfAccount: number;
+  private readonly _twitterIdOfAccount: string;
 
   private readonly _eventBridge: aws.EventBridge;
 
@@ -83,7 +83,7 @@ class Twitter {
 
     this._secretArn = SecretArn;
     this._eventBusName = EventBusName;
-    this._twitterIdOfAccount = parseInt(TwitterIdOfAccount);
+    this._twitterIdOfAccount = TwitterIdOfAccount;
     this._eventBridge = new aws.EventBridge();
     this._secretsManager = new aws.SecretsManager();
 
@@ -199,10 +199,11 @@ class Twitter {
     };
 
     for (const type in types) {
-      const eventsOfType = (payload as any)[type];
+      const eventsOfType = (payload as never)[type];
       if (eventsOfType) {
         const typeName: string = types[type];
-        (payload as any)[type].forEach((e: any) => events.push(this.generateSingleEvent(typeName, e)));
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (payload as any)[type].forEach((e: never) => events.push(this.generateSingleEvent(typeName, e)));
       }
     }
 
@@ -210,7 +211,7 @@ class Twitter {
     if (payload.tweet_create_events) {
       payload.tweet_create_events.forEach((e) => {
         // If it wasn't sent by the twitter account we are receiving events for
-        if (e.user.id !== this._twitterIdOfAccount) {
+        if (e.user.id_str !== this._twitterIdOfAccount) {
           events.push(this.generateMessageReceivedEvent(e)); 
         }
       });
@@ -219,7 +220,7 @@ class Twitter {
     return events;
   };
 
-  generateSingleEvent = (type: string, detail: any): aws.EventBridge.PutEventsRequestEntry => {
+  generateSingleEvent = (type: string, detail: never): aws.EventBridge.PutEventsRequestEntry => {
     return {
       Detail: JSON.stringify(detail),
       DetailType: `TWITTER_${type}`, // Strip _events

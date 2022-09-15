@@ -2,11 +2,13 @@
 A AWS Cloud Native application using CDK (Written in TypeScript) that defines an deploys a Serverless Event Driven application for interacting with Twitter and utilising Machine Learning / AI as a Service.
 
 ## Utilised AWS Services
+* AWS Glue 
 * AWS Identity and Access Management (IAM)
 * AWS Lambda
 * AWS Secrets Manager
 * AWS Step Functions
 * Amazon API Gateway
+* Amazon Athena
 * Amazon CloudWatch
 * Amazon Comprehend
 * Amazon EventBridge
@@ -64,3 +66,40 @@ Twitter lists all of the types that could be sent to the endpoint: https://devel
 
 ## Flow
 TODO
+
+
+TODO: 
+Move account ID and makitdev to be params!
+test with png
+
+## Athena
+Sample searches:
+
+### Select all Celebrities
+```
+SELECT time, detail.author, celebrityfaces.name
+FROM "analysed-messages-table"
+CROSS JOIN UNNEST(detail.analysis.images) as t(images)
+CROSS JOIN UNNEST(images.analysis.celebrityfaces) as t(celebrityfaces)
+WHERE "detail-type" = 'MESSAGE_ANALYSED'
+ORDER BY time DESC
+```
+
+### Select all Image Labels
+```
+SELECT time, detail.author, detail.text, labels.name
+FROM "analysed-messages-table"
+CROSS JOIN UNNEST(detail.analysis.images) as t(images)
+CROSS JOIN UNNEST(images.analysis.labels) as t(labels)
+WHERE "detail-type" = 'MESSAGE_ANALYSED'
+ORDER BY time DESC
+```
+
+### Select all Positive Text
+```
+SELECT time, detail.author, detail.analysis.textsentiment, detail.text
+FROM "analysed-messages-table"
+CROSS JOIN UNNEST(detail.analysis.images) as t(images)
+WHERE "detail-type" = 'MESSAGE_ANALYSED' AND detail.analysis.textsentiment='POSITIVE'
+ORDER BY time DESC
+```
