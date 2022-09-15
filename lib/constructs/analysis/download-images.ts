@@ -31,6 +31,7 @@ export default class DownloadImagesConstruct extends Construct {
 
     this.lambda = new lambdanode.NodejsFunction(this, 'lambda', {
       runtime: lambda.Runtime.NODEJS_16_X,
+      architecture: lambda.Architecture.ARM_64,
       environment: {
         Bucket: props.bucket.bucketName,
         NODE_OPTIONS: '--enable-source-maps',
