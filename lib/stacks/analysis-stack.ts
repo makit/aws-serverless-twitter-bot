@@ -51,7 +51,11 @@ export class AnalysisStack extends cdk.Stack {
     analyseIncomingMessageRule.addTarget(new targets.SfnStateMachine(analyseMessageStateMachine));
   }
 
-  private buildStepFunction() {
+  /**
+   * Will build the main analysis stepfunction that will orchestrate the calls to the different AI services.
+   * @returns The build State Machine.
+   */
+  private buildStepFunction(): stepfunctions.StateMachine {
     const detectEntities = new tasks.CallAwsService(this, "Detect Entities", {
       service: "comprehend",
       action: "detectEntities",

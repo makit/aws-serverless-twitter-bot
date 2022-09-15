@@ -51,6 +51,7 @@ export class PlumbingStack extends cdk.Stack {
     this.createMetricFilter(catchAllLogGroup, 'TWITTER_UNFOLLOWED');
     this.createMetricFilter(catchAllLogGroup, 'TWITTER_DM_RECEIVED');
     this.createMetricFilter(catchAllLogGroup, 'TWITTER_DELETED');
+    this.createMetricFilter(catchAllLogGroup, 'SEND_TWEET');
 
     const catchAllRule = new events.Rule(this, 'CatchAllRule', {
       eventPattern: {
@@ -61,6 +62,11 @@ export class PlumbingStack extends cdk.Stack {
     catchAllRule.addTarget(new targets.CloudWatchLogGroup(catchAllLogGroup));
   }
 
+  /**
+   * Creates a single metric filter for the given detail type..
+   * @param catchAllLogGroup The log group that is capturing all messages through the application.
+   * @param metricName The name of the detail-type and therefore metric to create.
+   */
   private createMetricFilter(catchAllLogGroup: cdk.aws_logs.LogGroup, metricName: string) {
     new logs.MetricFilter(this, `MetricFilter${metricName}`, {
       logGroup: catchAllLogGroup,

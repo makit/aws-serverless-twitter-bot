@@ -108,15 +108,38 @@ export class AnalyticsStack extends cdk.Stack {
                   name: "Images",
                   type: glue.Schema.array(glue.Schema.struct([
                     {
-                      name: "CelebrityFaces",
-                      type: glue.Schema.array(glue.Schema.struct([
+                      name: "Analysis",
+                      type: glue.Schema.struct([
                         {
-                          name: "Name",
-                          type: glue.Schema.STRING,
+                          name: "CelebrityFaces",
+                          type: glue.Schema.array(glue.Schema.struct([
+                            {
+                              name: "Name",
+                              type: glue.Schema.STRING,
+                            },
+                            {
+                              name: "Face",
+                              type: glue.Schema.struct([
+                                {
+                                  name: "Emotions",
+                                  type: glue.Schema.array(glue.Schema.struct([
+                                    {
+                                      name: "Confidence",
+                                      type: glue.Schema.DOUBLE,
+                                    },
+                                    {
+                                      name: "Type",
+                                      type: glue.Schema.STRING,
+                                    },
+                                  ])),
+                                },
+                              ])
+                            }
+                          ])),
                         },
                         {
-                          name: "Face",
-                          type: glue.Schema.struct([
+                          name: "UnrecognizedFaces",
+                          type: glue.Schema.array(glue.Schema.struct([
                             {
                               name: "Emotions",
                               type: glue.Schema.array(glue.Schema.struct([
@@ -130,41 +153,23 @@ export class AnalyticsStack extends cdk.Stack {
                                 },
                               ])),
                             },
-                          ])
-                        }
-                      ])),
-                    },
-                    {
-                      name: "UnrecognizedFaces",
-                      type: glue.Schema.array(glue.Schema.struct([
+                          ])),
+                        },
                         {
-                          name: "Emotions",
+                          name: "Labels",
                           type: glue.Schema.array(glue.Schema.struct([
                             {
                               name: "Confidence",
                               type: glue.Schema.DOUBLE,
                             },
                             {
-                              name: "Type",
+                              name: "Name",
                               type: glue.Schema.STRING,
                             },
                           ])),
                         },
-                      ])),
-                    },
-                    {
-                      name: "Labels",
-                      type: glue.Schema.array(glue.Schema.struct([
-                        {
-                          name: "Confidence",
-                          type: glue.Schema.DOUBLE,
-                        },
-                        {
-                          name: "Name",
-                          type: glue.Schema.STRING,
-                        },
-                      ])),
-                    },
+                      ])
+                    }
                   ])),
                 },
               ]),

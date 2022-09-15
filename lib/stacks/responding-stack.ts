@@ -71,6 +71,10 @@ export class RespondingStack extends cdk.Stack {
     analyseImageRule.addTarget(new targets.LambdaFunction(processImages.lambda));
   }
 
+  /**
+   * Create the Lex bot and lambdas that Lex will use/or be called from.
+   * @returns The lambda that calls the Lex bot.
+   */
   private createTextResponseResources(): lambda.IFunction {
     const role = new iam.Role(this, 'BotRole', {
       assumedBy: new iam.ServicePrincipal('lexv2.amazonaws.com'),
