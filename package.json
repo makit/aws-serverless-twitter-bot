@@ -12,7 +12,9 @@
   "scripts": {
     "build": "tsc",
     "watch": "tsc -w",
-    "cdk": "cdk"
+    "cdk": "cdk",
+    "lint": "eslint --ext .ts .",
+    "lint-fix": "eslint --fix --ext .ts ."
   },
   "devDependencies": {
     "@types/jest": "^27.5.2",
@@ -31,6 +33,9 @@
     "aws-sdk": "^2.1209.0",
     "axios": "^0.27.2",
     "constructs": "^10.0.0",
+    "eslint": "^8.23.1",
+    "eslint-config-airbnb-typescript": "^17.0.0",
+    "eslint-plugin-import": "^2.26.0",
     "gm": "^1.23.1",
     "source-map-support": "^0.5.21",
     "twitter-api-client": "^1.6.1"
