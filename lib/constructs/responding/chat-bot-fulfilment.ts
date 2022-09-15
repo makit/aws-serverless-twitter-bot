@@ -6,7 +6,7 @@ import * as lambdanode from 'aws-cdk-lib/aws-lambda-nodejs';
 /**
  * Construct for a lambda (and associated role) for fulfilment of topics with Lex.
  */
-export default class ChatBotFulfillmentConstruct extends Construct {
+export default class ChatBotFulfilmentConstruct extends Construct {
 
   public readonly lambda : lambda.IFunction;
 

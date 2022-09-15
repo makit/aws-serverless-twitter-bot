@@ -7,7 +7,7 @@ import * as iam from 'aws-cdk-lib/aws-iam';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as targets from 'aws-cdk-lib/aws-events-targets';
 import ChatBotConstruct from '../constructs/responding/chat-bot';
-import ChatBotFulfillmentConstruct from '../constructs/responding/chat-bot-fulfillment';
+import ChatBotFulfilmentConstruct from '../constructs/responding/chat-bot-fulfilment';
 import ProcessImagesConstruct from '../constructs/responding/process-images';
 
 export interface RespondingStackProps extends cdk.StackProps {
@@ -79,7 +79,7 @@ export class RespondingStack extends cdk.Stack {
       assumedBy: new iam.ServicePrincipal('lexv2.amazonaws.com'),
     });
 
-    const chatBotFulfilmentConstruct = new ChatBotFulfillmentConstruct(this, 'ChatBotFulfilment');
+    const chatBotFulfilmentConstruct = new ChatBotFulfilmentConstruct(this, 'ChatBotFulfilment');
 
     const jokeIntent: lex.CfnBot.IntentProperty = {
       name: 'Joke',
