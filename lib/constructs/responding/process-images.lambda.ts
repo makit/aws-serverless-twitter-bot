@@ -141,7 +141,7 @@ class ProcessImages {
               img.stroke("red", 1).fontSize(18).drawText(x, y, celebFace.Name);
             }
 
-            // One option is to blue the unknowns
+            // One option is to blur the unknowns
             // console.info('Processing Unrecognized faces', imageSpec.Key);
             // for(const unknownFace of imageSpec.Analysis.UnrecognizedFaces) {
             //   img.region(
