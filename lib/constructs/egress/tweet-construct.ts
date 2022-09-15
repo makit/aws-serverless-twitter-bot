@@ -42,6 +42,7 @@ export default class TweetConstruct extends Construct {
 
     this.lambda = new lambdanode.NodejsFunction(this, 'lambda', {
       runtime: lambda.Runtime.NODEJS_16_X,
+      architecture: lambda.Architecture.ARM_64,
       environment: {
         Bucket: props.bucket.bucketName,
         SecretArn: props.twitterSecret.secretArn,

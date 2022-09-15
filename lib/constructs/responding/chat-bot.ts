@@ -35,6 +35,7 @@ export default class ChatBotConstruct extends Construct {
 
     this.lambda = new lambdanode.NodejsFunction(this, 'lambda', {
       runtime: lambda.Runtime.NODEJS_16_X,
+      architecture: lambda.Architecture.ARM_64,
       environment: {
         BotId: props.botId,
         BotAliasId: props.botAliasId,

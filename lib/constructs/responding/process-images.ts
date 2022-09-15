@@ -43,6 +43,7 @@ export default class ProcessImagesConstruct extends Construct {
 
     this.lambda = new lambdanode.NodejsFunction(this, 'lambda', {
       runtime: lambda.Runtime.NODEJS_16_X,
+      architecture: lambda.Architecture.X86_64, // Can't use ARM for ImageMagick
       layers: [layer],
       environment: {
         Bucket: props.bucket.bucketName,
