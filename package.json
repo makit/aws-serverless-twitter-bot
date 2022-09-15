@@ -1,8 +1,8 @@
 {
-  "name": "aws-serverless-message-analyser",
+  "name": "aws-serverless-twitter-bot",
   "version": "0.1.0",
   "bin": {
-    "aws-serverless-message-analyser": "bin/aws-serverless-message-analyser.js"
+    "aws-serverless-twitter-bot": "bin/aws-serverless-twitter-bot.js"
   },
   "scripts": {
     "build": "tsc",

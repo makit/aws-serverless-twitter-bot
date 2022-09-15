@@ -39,5 +39,11 @@ export class IngressStack extends cdk.Stack {
     const twitterEndpoint = api.root.addResource('twitter');
     twitterEndpoint.addMethod('GET');
     twitterEndpoint.addMethod('POST');
+
+    // Create an Output for information
+    new cdk.CfnOutput(this, 'APIGateway', {
+      value: api.url,
+      description: 'The ingress API endpoint for the Twitter Bot',
+    });
   }
 }
