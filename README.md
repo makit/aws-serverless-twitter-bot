@@ -2,9 +2,9 @@
 An AWS Cloud Native application using CDK (Written in TypeScript) that defines a Serverless Event Driven application for interacting with Twitter and utilising Machine Learning / AI as a Service.
 
 ## Overview
-![System Diagram](diagram.png)
+![System Diagram](Diagram.png)
 
-First point to realise for this application, is that it could be simplified down to a few lambdas without Events - and for this single usecase it would work fine. The premise here is to demonstrate many different concepts and a Serverless Event Driven architecture that works for simple applications as well as for the Enterprise.
+First point to realise for this application, is that it could be simplified down to a few lambdas without Events - and for this single use-case it would work fine. The premise here is to demonstrate many different concepts and a Serverless Event Driven architecture that works for simple applications as well as for the Enterprise.
 
 This whole application is defined here within CDK, apart from the Ad-Hoc Athena queries, some examples can be seen below.
 
