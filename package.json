@@ -1,13 +1,17 @@
 {
   "name": "aws-serverless-twitter-bot",
-  "version": "0.1.0",
+  "description": "CDK Application for a Serverless Event Driven Twitter Bot Utilising AI Services",
+  "version": "1.0.0",
+  "author": {
+    "name": "Martyn Kilbryde",
+    "url": "https://makit.net/"
+  },
   "bin": {
     "aws-serverless-twitter-bot": "bin/aws-serverless-twitter-bot.js"
   },
   "scripts": {
     "build": "tsc",
     "watch": "tsc -w",
-    "test": "jest",
     "cdk": "cdk"
   },
   "devDependencies": {
@@ -15,8 +19,6 @@
     "@types/node": "16.11.58",
     "@types/prettier": "2.6.0",
     "aws-cdk": "2.41.0",
-    "jest": "^27.5.1",
-    "ts-jest": "^27.1.4",
     "ts-node": "^10.9.1",
     "typescript": "~3.9.7"
   },
