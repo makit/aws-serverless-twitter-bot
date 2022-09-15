@@ -1,5 +1,5 @@
 # AWS Serverless Event Driven Twitter Bot
-A AWS Cloud Native application using CDK (Written in TypeScript) that defines an deploys a Serverless Event Driven application for interacting with Twitter and utilising Machine Learning / AI as a Service.
+An AWS Cloud Native application using CDK (Written in TypeScript) that defines an deploys a Serverless Event Driven application for interacting with Twitter and utilising Machine Learning / AI as a Service.
 
 ## Utilised AWS Services
 * AWS Glue 
