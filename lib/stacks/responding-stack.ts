@@ -12,7 +12,7 @@ import ProcessImagesConstruct from '../constructs/responding/process-images';
 
 export interface RespondingStackProps extends cdk.StackProps {
   plumbingEventBus: events.IEventBus,
-  analysisBucket: s3.IBucket
+  analysisBucket: s3.IBucket,
 }
 
 /**
@@ -88,13 +88,19 @@ export class RespondingStack extends cdk.Stack {
           utterance: 'please tell me a joke',
         },
         {
+          utterance: 'tell me a joke',
+        },
+        {
           utterance: 'I would like to hear a joke',
         },
         {
           utterance: 'make me laugh',
         },
         {
-          utterance: 'have you got a good joke',
+          utterance: 'have you got a joke',
+        },
+        {
+          utterance: 'tell me something funny',
         },
       ],
       fulfillmentCodeHook: {
@@ -109,13 +115,16 @@ export class RespondingStack extends cdk.Stack {
           utterance: 'please tell me a fact',
         },
         {
+          utterance: 'tell me a fact',
+        },
+        {
           utterance: 'I would like to hear a fact',
         },
         {
           utterance: 'tell me something interesting',
         },
         {
-          utterance: "I'd like to hear something interesting",
+          utterance: 'I would like to hear something interesting',
         },
       ],
       fulfillmentCodeHook: {
@@ -133,7 +142,7 @@ export class RespondingStack extends cdk.Stack {
             {
               message: {
                 plainTextMessage: {
-                  value: 'You can ask me for a joke, fact or send an image and I will identify the celebrities',
+                  value: 'You can ask me for a joke, fact or send a single image and I will identify the celebrities',
                 },
               },
             },
@@ -153,7 +162,7 @@ export class RespondingStack extends cdk.Stack {
       botLocales: [
         {
           localeId: this.localeId,
-          nluConfidenceThreshold: 0.4,
+          nluConfidenceThreshold: 0.6,
           intents: [jokeIntent, factIntent, fallbackIntent],
         },
       ],

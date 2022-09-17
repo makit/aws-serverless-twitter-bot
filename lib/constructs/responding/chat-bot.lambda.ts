@@ -58,7 +58,7 @@ class ChatBot {
       botAliasId: this._botAliasId,
       localeId: this._botLocaleId,
       sessionId: event.detail.Author,
-      text: event.detail.Text,
+      text: event.detail.Text.replace('@\S+', '').trim(), // Remove the username because Lex isn't trained on that
     }).promise();
 
     console.info('Response:', JSON.stringify(response, null, 2));
