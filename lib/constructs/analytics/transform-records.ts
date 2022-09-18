@@ -1,4 +1,5 @@
 import { Construct } from 'constructs';
+import * as cdk from 'aws-cdk-lib';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as lambdanode from 'aws-cdk-lib/aws-lambda-nodejs';
 
@@ -22,6 +23,7 @@ export default class TransformRecordsConstruct extends Construct {
         minify: true,
         sourceMap: true,
       },
+      timeout: cdk.Duration.minutes(1),
     });
   }
 }
